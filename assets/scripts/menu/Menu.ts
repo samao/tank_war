@@ -1,19 +1,25 @@
-import { _decorator, Component, Node, find, director, ToggleContainer } from 'cc';
-import { GameMgr } from '../mgrs/GameMgr';
-import { Base } from '../common/Base';
-import { AudioMgr } from '../mgrs/AudioMgr';
+import { _decorator, Component, Node, find, director, ToggleContainer } from "cc";
+import { Base } from "../common/Base";
 const { ccclass, property } = _decorator;
 
-@ccclass('Menu')
+@ccclass("Menu")
 export class Menu extends Base {
+    #ready = false;
+
     protected start(): void {
-        this.rootMgr.getComponent(AudioMgr).count++;
+        this.#ready = this.game.ready;
+        if (!this.#ready) {
+            this.game.node.once("ready", () => {
+                this.#ready = this.game.ready;
+            });
+        }
     }
+
     gotoGame() {
-        const mode = this.getComponentInChildren(ToggleContainer).toggleItems.findIndex(item => item.isChecked);
-        this.rootMgr.getComponent(GameMgr).setMode(mode);
-        director.loadScene('fight')
+        if (this.#ready) {
+            const mode = this.getComponentInChildren(ToggleContainer).toggleItems.findIndex((item) => item.isChecked);
+            this.game.setMode(mode);
+            director.loadScene("fight");
+        }
     }
 }
-
-

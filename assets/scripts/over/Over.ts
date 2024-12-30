@@ -6,7 +6,8 @@ const { ccclass, property } = _decorator;
 @ccclass('Over')
 export class Over extends Base {
     start() {
-        console.log('over: ref', this.rootMgr.getComponent(AudioMgr).count++);
+        console.log('over: ref', this.audio.count++);
+        this.audio.effectPlay('game_over')
     }
 
     gotoMenu() {
