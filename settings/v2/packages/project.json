@@ -2,9 +2,55 @@
   "__version__": "1.0.6",
   "general": {
     "designResolution": {
-      "width": 1280,
-      "height": 720,
-      "fitHeight": true
+      "width": 300,
+      "height": 208,
+      "fitHeight": true,
+      "fitWidth": false
     }
-  }
+  },
+  "physics": {
+    "gravity": {
+      "y": 0
+    },
+    "collisionGroups": [
+      {
+        "index": 1,
+        "name": "PLAYER"
+      },
+      {
+        "index": 2,
+        "name": "BULLET"
+      },
+      {
+        "index": 3,
+        "name": "BLOCK"
+      },
+      {
+        "index": 4,
+        "name": "FOREST"
+      },
+      {
+        "index": 5,
+        "name": "RIVER"
+      }
+    ],
+    "collisionMatrix": {
+      "0": 7,
+      "1": 43,
+      "2": 9,
+      "3": 6,
+      "4": 0,
+      "5": 2
+    }
+  },
+  "layer": [
+    {
+      "name": "STICK_P1",
+      "value": 1
+    },
+    {
+      "name": "STICK_P2",
+      "value": 2
+    }
+  ]
 }

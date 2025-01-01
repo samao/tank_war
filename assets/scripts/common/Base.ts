@@ -20,6 +20,14 @@ export class Base extends Component {
         this.game = this.rootMgr.getComponent(GameMgr);
         this.animation = this.rootMgr.getComponent(AnimationMgr);
     }
+
+    effectPlayFromUI(toggle, name: string) {
+        this.effectPlay(name)
+    }
+
+    protected effectPlay(name: string) {
+        this.audio.effectPlay(name);
+    }
 }
 
 

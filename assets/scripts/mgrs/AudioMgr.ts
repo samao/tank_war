@@ -25,11 +25,17 @@ export class AudioMgr extends Component {
         });
     }
 
-    play(name: string) {
+    play(name: string, volume = 0.3) {
         this.#audioSource.clip = this.#map.get(name);
         this.#audioSource.loop = true;
-        this.#audioSource.volume = 0.5;
+        this.#audioSource.volume = volume;
         this.#audioSource.play();
+    }
+
+    stop() {
+        this.#audioSource.stop();
+        this.#audioSource.clip = null;
+        this.#audioSource.loop = false;
     }
 
     effectPlay(name: string, volume = 0.5) {

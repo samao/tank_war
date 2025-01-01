@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, find, director, ToggleContainer } from "cc";
+import { _decorator, Component, Node, find, director, ToggleContainer, Toggle } from "cc";
 import { Base } from "../common/Base";
 const { ccclass, property } = _decorator;
 

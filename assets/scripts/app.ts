@@ -16,6 +16,11 @@ export class app extends Component {
             console.log('APP Mount')
         }
     }
+
+    protected onEnable(): void {
+        console.log('START NODE MOUNT')
+        director.loadScene('menu')
+    }
 }
 
 
