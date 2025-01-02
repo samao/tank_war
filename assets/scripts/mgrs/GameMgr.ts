@@ -42,11 +42,8 @@ export class GameMgr extends Component {
     #map: Map<string, string> = new Map();
 
     #tankMap: Map<string, SpriteFrame[]> = new Map();
-
     #blockMap: Map<string, SpriteFrame> = new Map();
-
     #_ready = false;
-
     #sfsMap: Map<string,SpriteFrame[]> = new Map();
 
     protected onLoad(): void {

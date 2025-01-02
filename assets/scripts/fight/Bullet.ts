@@ -47,10 +47,6 @@ export class Bullet extends Component {
     #transTo() {
         return this.node.parent.inverseTransformPoint(new Vec3(), this.#body.worldPosition).toVec2();
     }
-
-    protected onDestroy(): void {
-        console.log('子弹销毁了')
-    }
 }
 
 

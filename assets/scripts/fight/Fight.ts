@@ -1,14 +1,37 @@
-import { _decorator, Camera, Contact2DType, find, instantiate, Node, Prefab, Size, Sprite, SpriteFrame, UITransform, Vec2, Vec3 } from "cc";
+import {
+    _decorator,
+    Camera,
+    Contact2DType,
+    find,
+    instantiate,
+    math,
+    Node,
+    Prefab,
+    Size,
+    Sprite,
+    SpriteFrame,
+    UITransform,
+    Vec2,
+    Vec3,
+} from "cc";
 import { Base } from "../common/Base";
 import { GameMode, BLOCK, BlockTexture } from "../mgrs/GameMgr";
 import { Block } from "./Block";
 import { Player } from "./Player";
+import { MovieClip } from "../common/MovieClip";
+import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 const { ccclass, property } = _decorator;
 
 const SCREEN = new Size(208, 208);
 const COLUMN_SIZE = 26;
 const BLOCK_SIZE = new Size(8, 8);
 const START_POS = new Vec2(SCREEN.width, SCREEN.height).multiplyScalar(0.5);
+
+export const SWAPN_POINTS = [
+    new Vec3().add3f(-SCREEN.x / 2 + BLOCK_SIZE.width, SCREEN.height / 2 - BLOCK_SIZE.height, 0),
+    new Vec3().add3f(0, SCREEN.height / 2 - BLOCK_SIZE.height, 0),
+    new Vec3().add3f(SCREEN.x / 2 - BLOCK_SIZE.width, SCREEN.height / 2 - BLOCK_SIZE.height, 0),
+];
 
 @ccclass("Fight")
 export class Fight extends Base {
@@ -33,7 +56,13 @@ export class Fight extends Base {
     @property(Prefab)
     private playerPrefab: Prefab;
 
+    @property({displayName: '出生无敌时间'})
+    private invincibleTime = 2;
+
     #playerSticks: Map<Player, Node> = new Map();
+
+    @property(Prefab)
+    private movieClip: Prefab;
 
     protected onLoad(): void {
         super.onLoad();
@@ -53,13 +82,13 @@ export class Fight extends Base {
     }
 
     protected onDestroy(): void {
-        console.log('FIGHT DES')
+        console.log("FIGHT DES");
         // this.#disConnectStick();
     }
 
     protected onDisable(): void {
-        console.log('FIGHT DISABLE')
-        this.#disConnectStick()
+        console.log("FIGHT DISABLE");
+        this.#disConnectStick();
     }
 
     setupCamare() {
@@ -81,7 +110,7 @@ export class Fight extends Base {
         this.front.removeAllChildren();
         this.behind.removeAllChildren();
         this.players.removeAllChildren();
-        
+
         this.createGameMap();
     }
 
@@ -116,6 +145,24 @@ export class Fight extends Base {
         }
 
         this.createPlayerTank();
+        this.#createEnemySwapPoint();
+    }
+
+    #createEnemySwapPoint() {
+        const swapPoint = find("Canvas/game/Mask/swap_point");
+        swapPoint.removeAllChildren();
+        const swaps = SWAPN_POINTS.map((point) => {
+            const movie = instantiate(this.movieClip).getComponent(MovieClip);
+            movie.node.setPosition(point);
+            movie.node.setParent(swapPoint);
+            movie.bindDir("star");
+
+            movie.node.active = false;
+
+            return movie.node;
+        });
+
+        this.getComponent(EnemiesMgr).setupSwap(swaps, SWAPN_POINTS);
     }
 
     private createBlockAt(type: BLOCK, pos: Vec2, { width, height }: Size, id: number) {
@@ -144,7 +191,7 @@ export class Fight extends Base {
     }
 
     #disConnectStick() {
-        console.log('销毁STICK 关联')
+        console.log("销毁STICK 关联");
         this.#playerSticks.forEach((stick, player) => {
             player.unBindStick();
         });
@@ -158,25 +205,25 @@ export class Fight extends Base {
         const player = instantiate(this.playerPrefab);
         player.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
         player.setParent(this.players);
-        const p1stick = find('Canvas/ui/sticks/player1');
-        const playerCMP = player.getComponent(Player)
-        playerCMP.bindStick(p1stick)
-        playerCMP.invincible(3);
+        const p1stick = find("Canvas/ui/sticks/player1");
+        const playerCMP = player.getComponent(Player);
+        playerCMP.bindStick(p1stick);
+        playerCMP.invincible(this.invincibleTime);
 
-        this.#playerSticks.set(playerCMP, p1stick)
+        this.#playerSticks.set(playerCMP, p1stick);
 
         if (this.game.getMode() === GameMode.DOUBLE) {
             const pos = this.blockIndexToPos(SWAP_POINT.y);
             const player2 = instantiate(this.playerPrefab);
             player2.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
             player2.setParent(this.players);
-            const p2stick = find('Canvas/ui/sticks/player2');
+            const p2stick = find("Canvas/ui/sticks/player2");
             p2stick.active = true;
-            const playerCMP = player2.getComponent(Player)
-            playerCMP.bindStick(p2stick)
-            playerCMP.invincible(3);
-            
-            this.#playerSticks.set(playerCMP, p2stick)
+            const playerCMP = player2.getComponent(Player);
+            playerCMP.bindStick(p2stick);
+            playerCMP.invincible(this.invincibleTime);
+
+            this.#playerSticks.set(playerCMP, p2stick);
         }
     }
 }

@@ -26,7 +26,7 @@ import { Base } from "../common/Base";
 import { Stick, TOWARDS } from "./Stick";
 const { ccclass, property } = _decorator;
 
-enum FACE_TO {
+export enum FACE_TO {
     UP = -90,
     DOWN = 90,
     RIGHT = 180,
@@ -92,35 +92,6 @@ export class Player extends Base {
         this.#stick.off(Stick.EventType.TOUCHING, this.#stickHandle);
         this.#stick.off(Stick.EventType.SHOOTING, this.#shoot);
     }
-
-    #onKeyHandle = (e: EventKeyboard) => {
-        // console.log(KeyCode[e.keyCode], e.type)
-        switch (e.keyCode) {
-            case KeyCode.KEY_W:
-                this.#direction.set(0, e.type === Input.EventType.KEY_DOWN ? 1 : 0);
-                // this.#rgd.
-                this.#body.setRotationFromEuler(Vec3.UNIT_Z.clone().multiplyScalar(FACE_TO.UP));
-                break;
-            case KeyCode.KEY_A:
-                this.#direction.set(e.type === Input.EventType.KEY_DOWN ? -1 : 0, 0);
-                this.#body.setRotationFromEuler(Vec3.UNIT_Z.clone().multiplyScalar(FACE_TO.LEFT));
-                break;
-            case KeyCode.KEY_S:
-                this.#direction.set(0, e.type === Input.EventType.KEY_DOWN ? -1 : 0);
-                this.#body.setRotationFromEuler(Vec3.UNIT_Z.clone().multiplyScalar(FACE_TO.DOWN));
-                break;
-            case KeyCode.KEY_D:
-                this.#direction.set(e.type === Input.EventType.KEY_DOWN ? 1 : 0, 0);
-                this.#body.setRotationFromEuler(Vec3.UNIT_Z.clone().multiplyScalar(FACE_TO.RIGHT));
-                break;
-        }
-
-        if (e.keyCode === KeyCode.SPACE && e.type === Input.EventType.KEY_UP) {
-            this.#shoot();
-        }
-
-        this.#playWhenWalk();
-    };
 
     #stickHandle = (dir: TOWARDS) => {
         // console.log('stick fire', dir)

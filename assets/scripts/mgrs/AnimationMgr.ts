@@ -17,7 +17,7 @@ export class AnimationMgr extends Component {
         mode?: AnimationClip.WrapMode;
     }) {
         if (this.#map.has(name)) {
-            console.log("直接返回动画", name);
+            // console.log("直接返回动画", name);
             return this.#map.get(name);
         }
         //sys.isBrowser ? [] :

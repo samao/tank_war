@@ -2,6 +2,7 @@ import { _decorator, AudioSource, Component, find, Node } from 'cc';
 import { GameMgr } from '../mgrs/GameMgr';
 import { AudioMgr } from '../mgrs/AudioMgr';
 import { AnimationMgr } from '../mgrs/AnimationMgr';
+import { EnemiesMgr } from '../mgrs/EnemiesMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('Base')
