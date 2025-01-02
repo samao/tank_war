@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, resources, SpriteFrame, TextAsset } from "cc";
+import { _decorator, Component, EventKeyboard, game, Input, input, KeyCode, Node, resources, SpriteFrame, sys, TextAsset } from "cc";
 const { ccclass, property } = _decorator;
 
 export enum GameMode {
@@ -14,7 +14,7 @@ export enum BLOCK {
     River = "4",
     Stone = "5",
     Camp = "99",
-    Camp_BROKEN = '100'
+    Camp_BROKEN = "100",
 }
 
 export enum ContactGroup {
@@ -33,7 +33,7 @@ export const BlockTexture: Record<Exclude<BLOCK, BLOCK.None>, { pic: string }> =
     [BLOCK.River]: { pic: "river-0" },
     [BLOCK.Stone]: { pic: "stone" },
     [BLOCK.Camp]: { pic: "camp0" },
-    [BLOCK.Camp_BROKEN]: { pic: "camp1" }
+    [BLOCK.Camp_BROKEN]: { pic: "camp1" },
 };
 
 @ccclass("GameMgr")
@@ -44,7 +44,25 @@ export class GameMgr extends Component {
     #tankMap: Map<string, SpriteFrame[]> = new Map();
     #blockMap: Map<string, SpriteFrame> = new Map();
     #_ready = false;
-    #sfsMap: Map<string,SpriteFrame[]> = new Map();
+    #sfsMap: Map<string, SpriteFrame[]> = new Map();
+
+    protected onEnable(): void {
+        if (sys.isMobile) {
+            input.on(Input.EventType.KEY_UP, this.#quit);
+        }
+    }
+
+    protected onDisable(): void {
+        if (sys.isMobile) {
+            input.off(Input.EventType.KEY_UP, this.#quit);
+        }
+    }
+
+    #quit = (e: EventKeyboard) => {
+        if (e.keyCode === KeyCode.BACKSPACE || e.keyCode === KeyCode.MOBILE_BACK) {
+            game.end();
+        }
+    };
 
     protected onLoad(): void {
         // console.log('onload GMR');
@@ -86,13 +104,14 @@ export class GameMgr extends Component {
             callback(this.#sfsMap.get(dir));
             return;
         }
+        
         resources.loadDir(dir, SpriteFrame, (err, sfs: SpriteFrame[]) => {
             if (err) {
                 return;
             }
             this.#sfsMap.set(dir, sfs);
             callback(sfs);
-        })
+        });
     }
 
     getMapDataByLevel(level: number) {
@@ -122,7 +141,7 @@ export class GameMgr extends Component {
     }
 
     getTankUi(name: string) {
-        return {name, sfs: this.#tankMap.get(name)!};
+        return { name, sfs: this.#tankMap.get(name)! };
     }
 
     setMode(type: GameMode) {

@@ -6,7 +6,7 @@ const { ccclass, property } = _decorator;
 export class MovieClip extends Base {
     @property({ displayName: "动画文件夹" })
     private dirPath = "";
-    @property({displayName: '每帧时间'})
+    @property({ displayName: "每帧时间" })
     private durationPerFrame = 0.1;
 
     protected start(): void {
@@ -17,20 +17,24 @@ export class MovieClip extends Base {
 
     bindDir(path: string, gap = 0.1) {
         if (!this.node.parent) {
-            console.warn('未添加到显示列表动画无法播放', path)
+            console.warn("未添加到显示列表动画无法播放", path);
             return;
         }
         this.dirPath = path;
         this.game.loadSpriteFrameDir(this.dirPath, (sfs) => {
-            let animation = this.getComponent(Animation);
-            if (!animation) {
-                animation = this.addComponent(Animation);
+            try {
+                let animation = this.getComponent(Animation);
+                if (!animation) {
+                    animation = this.addComponent(Animation);
+                }
+                this.getComponent(Sprite).spriteFrame = sfs[0];
+                animation.playOnLoad = true;
+                const clip = this.animation.createAnimation({ sfs, name: this.dirPath, gap, mode: AnimationClip.WrapMode.Loop });
+                // animation.clips.push(clip);
+                animation.defaultClip = clip;
+            } catch (e) {
+                console.warn(e);
             }
-            this.getComponent(Sprite).spriteFrame = sfs[0];
-            animation.playOnLoad = true;
-            const clip = this.animation.createAnimation({ sfs, name: this.dirPath, gap, mode: AnimationClip.WrapMode.Loop });
-            // animation.clips.push(clip);
-            animation.defaultClip = clip;
         });
     }
 }

@@ -2,7 +2,6 @@ import { _decorator, Component, director, find, Node } from 'cc';
 import { AudioMgr } from './mgrs/AudioMgr';
 import { GameMgr } from './mgrs/GameMgr';
 import { AnimationMgr } from './mgrs/AnimationMgr';
-import { EnemiesMgr } from './mgrs/EnemiesMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('app')
