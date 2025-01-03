@@ -23,9 +23,8 @@ export class Block extends Base {
     protected onEnable(): void {
         this.#cld = this.getComponent(BoxCollider2D);
         this.#cld.on(Contact2DType.BEGIN_CONTACT, this.#onCollider);
-        this.node.on(NodeEventType.MOUSE_DOWN, () => {
-            console.log(this.#type, this.#cld.group);
-        });
+
+        this.node.on(NodeEventType.MOUSE_DOWN, () => {})
     }
 
     protected onDisable(): void {
