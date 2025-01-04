@@ -23,8 +23,6 @@ export class Block extends Base {
     protected onEnable(): void {
         this.#cld = this.getComponent(BoxCollider2D);
         this.#cld.on(Contact2DType.BEGIN_CONTACT, this.#onCollider);
-
-        this.node.on(NodeEventType.MOUSE_DOWN, () => {})
     }
 
     protected onDisable(): void {
@@ -33,19 +31,21 @@ export class Block extends Base {
 
     #onCollider = (self: BoxCollider2D, oth: BoxCollider2D, ct: IPhysics2DContact) => {
         // console.log('被大众：', oth.group, ContactGroup.BULLET, this.#type, this.#type === BLOCK.Wall)
-        if (oth.group === ContactGroup.BULLET && [BLOCK.Wall, BLOCK.Ice, BLOCK.Camp].indexOf(this.#type) !== -1) {
+        if ((oth.group === ContactGroup.BULLET || oth.group === ContactGroup.ENEMY_BULLET) && [BLOCK.Wall, BLOCK.Ice, BLOCK.Camp].indexOf(this.#type) !== -1) {
             if (this.#type === BLOCK.Camp) {
                 this.#changeBrokenTexture();
+
+                this.scheduleOnce(() => {
+                    this.audio.stop();
+                    if (this.#type === BLOCK.Camp) {
+                        this.node.destroy();
+                        this.game.gameOver();
+                    }
+                }, 1);
+
             } else {
                 this.scheduleOnce(() => this.node.destroy());
             }
-            this.scheduleOnce(() => {
-                this.audio.stop();
-                if (this.#type === BLOCK.Camp) {
-                    this.node.destroy();
-                    director.loadScene("over");
-                }
-            }, 1);
         }
     };
 
@@ -65,6 +65,6 @@ export class Block extends Base {
     }
 
     protected onDestroy(): void {
-        console.log("墙销毁了");
+        // console.log("墙销毁了");
     }
 }

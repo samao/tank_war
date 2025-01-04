@@ -1,4 +1,4 @@
-import { _decorator, Component, Enum, EventKeyboard, EventTouch, Input, input, KeyCode, Node, NodeEventType, Rect, UITransform, Vec3 } from "cc";
+import { _decorator, Component, Enum, EventKeyboard, EventTouch, find, Input, input, KeyCode, Node, NodeEventType, Rect, sys, UITransform, Vec3 } from "cc";
 const { ccclass, property } = _decorator;
 
 @ccclass("CTR_KEY")
@@ -28,7 +28,7 @@ export enum TOWARDS {
     DOWN,
     LEFT,
     RIGHT,
-    CANCEL = 99,
+    CANCEL,
 }
 
 @ccclass("Stick")
@@ -36,7 +36,7 @@ export class Stick extends Component {
     #touching = false;
 
     static EventType = {
-        /** 0↑, 1↓, 2←, 3→, 99cancel*/
+        /** 0↑, 1↓, 2←, 3→, 4cancel*/
         TOUCHING: "touching",
         SHOOTING: "shooting",
     };
@@ -57,16 +57,22 @@ export class Stick extends Component {
         );
     }
 
+    hidenVirUI() {
+        console.log('设备类型：', sys.isMobile);
+        this.#areas.forEach(n => n.active = sys.isMobile);
+        this.fireBtn.active = sys.isMobile;
+    }
+
     protected onEnable(): void {
         this.#areas.forEach((node) => {
             node.on(Input.EventType.TOUCH_START, this.#onTouchStart);
             node.on(Input.EventType.TOUCH_END, this.#onTouchEnd);
             node.on(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
         });
+        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle)
 
         input.on(Input.EventType.KEY_DOWN, this.#onKeyDown)
         input.on(Input.EventType.KEY_UP, this.#onKeyDown)
-        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle)
     }
 
     protected onDisable(): void {
@@ -75,10 +81,14 @@ export class Stick extends Component {
             node.off(Input.EventType.TOUCH_END, this.#onTouchEnd);
             node.off(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
         });
+        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle)
 
         input.off(Input.EventType.KEY_DOWN, this.#onKeyDown)
         input.off(Input.EventType.KEY_UP, this.#onKeyDown)
-        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle)
+    }
+
+    protected start(): void {
+        console.log('onEnabled', this.node.active);
     }
 
     #fireHandle = () => {

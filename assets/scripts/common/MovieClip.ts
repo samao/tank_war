@@ -9,6 +9,8 @@ export class MovieClip extends Base {
     @property({ displayName: "每帧时间" })
     private durationPerFrame = 0.1;
 
+    private handle: () => void;
+
     protected start(): void {
         if (this.dirPath != "") {
             this.bindDir(this.dirPath, this.durationPerFrame);
@@ -21,7 +23,7 @@ export class MovieClip extends Base {
             return;
         }
         this.dirPath = path;
-        this.game.loadSpriteFrameDir(this.dirPath, (sfs) => {
+        this.handle = this.game.loadSpriteFrameDir(this.dirPath, (sfs) => {
             try {
                 let animation = this.getComponent(Animation);
                 if (!animation) {
@@ -36,5 +38,17 @@ export class MovieClip extends Base {
                 console.warn(e);
             }
         });
+    }
+
+    protected onEnable(): void {
+        this.getComponent(Animation)?.resume();
+    }
+
+    protected onDisable(): void {
+        this.getComponent(Animation)?.pause();
+        if (this.handle) {
+            this.handle();
+            this.handle = null;
+        }
     }
 }

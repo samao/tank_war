@@ -4,12 +4,14 @@ import {
     Contact2DType,
     find,
     instantiate,
+    Label,
     math,
     Node,
     Prefab,
     Size,
     Sprite,
     SpriteFrame,
+    sys,
     UITransform,
     Vec2,
     Vec3,
@@ -20,6 +22,7 @@ import { Block } from "./Block";
 import { Player } from "./Player";
 import { MovieClip } from "../common/MovieClip";
 import { EnemiesMgr } from "../mgrs/EnemiesMgr";
+import { Stick } from "./Stick";
 const { ccclass, property } = _decorator;
 
 const SCREEN = new Size(208, 208);
@@ -56,13 +59,25 @@ export class Fight extends Base {
     @property(Prefab)
     private playerPrefab: Prefab;
 
-    @property({displayName: '出生无敌时间'})
-    private invincibleTime = 2;
+    @property({ displayName: "出生无敌时间" })
+    private invincibleTime = 3;
 
     #playerSticks: Map<Player, Node> = new Map();
 
     @property(Prefab)
     private movieClip: Prefab;
+
+    @property(Node)
+    private bomblayer: Node;
+
+    @property(Label)
+    private stageLabel: Label;
+
+    @property(Node)
+    private levelUI: Node;
+
+    @property(Node)
+    private enemies: Node;
 
     protected onLoad(): void {
         super.onLoad();
@@ -71,7 +86,6 @@ export class Fight extends Base {
     }
 
     onEnable() {
-        this.audio.effectPlay("game_start");
         console.log("开启模式:", this.game.getMode());
 
         this.setupCamare();
@@ -89,41 +103,60 @@ export class Fight extends Base {
     protected onDisable(): void {
         console.log("FIGHT DISABLE");
         this.#disConnectStick();
+        this.unscheduleAllCallbacks();
     }
 
     setupCamare() {
-        switch (this.game.getMode()) {
-            case GameMode.DOUBLE:
-                this.#deputyCamera.enabled = true;
-                this.#player2Camera.enabled = true;
-                this.#mainCamera.enabled = false;
-                break;
-            default:
-                this.#mainCamera.enabled = true;
-                this.#deputyCamera.enabled = this.#player2Camera.enabled = false;
-                break;
+        if (sys.isMobile) {
+            switch (this.game.getMode()) {
+                case GameMode.DOUBLE:
+                    this.#deputyCamera.enabled = true;
+                    this.#player2Camera.enabled = true;
+                    this.#mainCamera.enabled = false;
+                    break;
+                default:
+                    this.#mainCamera.enabled = true;
+                    this.#deputyCamera.enabled = this.#player2Camera.enabled = false;
+                    break;
+            }
+        } else {
+            this.#mainCamera.enabled = true;
+            this.#deputyCamera.enabled = this.#player2Camera.enabled = false;
         }
     }
 
     nextLevel() {
         this.#level++;
-        this.front.removeAllChildren();
-        this.behind.removeAllChildren();
-        this.players.removeAllChildren();
-
+        this.#removeAll();
         this.createGameMap();
     }
 
     prevLevel() {
         this.#level--;
-        this.front.removeAllChildren();
-        this.behind.removeAllChildren();
-        this.players.removeAllChildren();
-
+        this.#removeAll();
         this.createGameMap();
     }
 
-    private createGameMap() {
+    #removeAll() {
+        this.front.removeAllChildren();
+        this.behind.removeAllChildren();
+        this.players.removeAllChildren();
+        this.enemies.removeAllChildren();
+    }
+
+    private async createGameMap() {
+        this.audio.effectPlay("game_start");
+        this.levelUI.active = true;
+        this.stageLabel.string = this.#level + "";
+        find("Canvas/ui").active = false;
+
+        await new Promise<void>((resolve) => {
+            this.scheduleOnce(resolve, 3);
+        });
+
+        this.levelUI.active = false;
+        find("Canvas/ui").active = true;
+
         const mapTags = this.game.getMapDataByLevel(this.#level);
 
         for (let i = 0; i < mapTags.length; i++) {
@@ -155,6 +188,7 @@ export class Fight extends Base {
             const movie = instantiate(this.movieClip).getComponent(MovieClip);
             movie.node.setPosition(point);
             movie.node.setParent(swapPoint);
+            movie.node.setScale(0.8, 0.8)
             movie.bindDir("star");
 
             movie.node.active = false;
@@ -198,6 +232,34 @@ export class Fight extends Base {
         this.#playerSticks.clear();
     }
 
+    destroyAtPos = (pos: Vec3, id = 0) => {
+        const bomb = instantiate(this.movieClip);
+        bomb.setParent(this.bomblayer);
+        bomb.getComponent(MovieClip).bindDir("blast");
+        bomb.setWorldPosition(pos);
+
+        this.scheduleOnce(() => {
+            bomb.destroy();
+        }, 0.5);
+
+        this.createPlayerById(id);
+    };
+
+    createPlayerById = (id: number) => {
+        this.scheduleOnce(() => {
+            const pos = this.blockIndexToPos(id !== 0 && this.game.getMode() === GameMode.DOUBLE ? SWAP_POINT.y : SWAP_POINT.x);
+            const player = instantiate(this.playerPrefab);
+            player.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
+            player.setParent(this.players);
+            const p1stick = find(`Canvas/ui/sticks/player${id !== 0 && this.game.getMode() === GameMode.DOUBLE ? "2" : "1"}`);
+            const playerCMP = player.getComponent(Player);
+            p1stick.getComponent(Stick).hidenVirUI();
+            playerCMP.bindStick(p1stick, id);
+            playerCMP.invincible(this.invincibleTime);
+            this.#playerSticks.set(playerCMP, p1stick);
+        }, 2);
+    };
+
     private createPlayerTank() {
         this.#disConnectStick();
 
@@ -206,8 +268,9 @@ export class Fight extends Base {
         player.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
         player.setParent(this.players);
         const p1stick = find("Canvas/ui/sticks/player1");
+        p1stick.getComponent(Stick).hidenVirUI();
         const playerCMP = player.getComponent(Player);
-        playerCMP.bindStick(p1stick);
+        playerCMP.bindStick(p1stick, 0);
         playerCMP.invincible(this.invincibleTime);
 
         this.#playerSticks.set(playerCMP, p1stick);
@@ -219,8 +282,9 @@ export class Fight extends Base {
             player2.setParent(this.players);
             const p2stick = find("Canvas/ui/sticks/player2");
             p2stick.active = true;
+            p2stick.getComponent(Stick).hidenVirUI();
             const playerCMP = player2.getComponent(Player);
-            playerCMP.bindStick(p2stick);
+            playerCMP.bindStick(p2stick, 1);
             playerCMP.invincible(this.invincibleTime);
 
             this.#playerSticks.set(playerCMP, p2stick);

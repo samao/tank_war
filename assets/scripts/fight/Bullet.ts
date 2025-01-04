@@ -11,17 +11,13 @@ export class Bullet extends Component {
     #body: Node;
 
     #cld: BoxCollider2D;
-
-    // protected onLoad(): void {
-    //     this.#body = this.node.getChildByName('body');
-    //     this.#cld = this.getComponentInChildren(BoxCollider2D);
-    // }
+    #frozen = false;
 
     protected onEnable(): void {
         this.#body = this.node.getChildByName('body');
         this.#cld = this.getComponentInChildren(BoxCollider2D);
         // console.log('create bullet and enable', this.#cld);
-        this.#cld.on(Contact2DType.BEGIN_CONTACT, this.#onCollider)
+        this.#cld.once(Contact2DType.BEGIN_CONTACT, this.#onCollider)
     }
 
     protected onDisable(): void {
@@ -30,13 +26,15 @@ export class Bullet extends Component {
     }
 
     #onCollider = (self: BoxCollider2D, oth: BoxCollider2D, ct: IPhysics2DContact) => {
-        // console.log(oth.group, oth.name)
+        ct.disabled = true;
+        this.#frozen = true;
         this.scheduleOnce(() => {
             this.node.destroy();
         })
     }
 
     update(deltaTime: number) {
+        if (this.#frozen) return;
         const pos = this.#body.position;
         this.#body.setPosition(new Vec3(pos.x - this.speed * deltaTime, pos.y, pos.z))
         if (!STAGE_RECT.contains(this.#transTo())) {

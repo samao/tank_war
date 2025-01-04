@@ -15,6 +15,7 @@ import {
     Node,
     NodeEventType,
     Prefab,
+    rect,
     RigidBody,
     RigidBody2D,
     Sprite,
@@ -24,6 +25,9 @@ import {
 } from "cc";
 import { Base } from "../common/Base";
 import { Stick, TOWARDS } from "./Stick";
+import { ContactGroup } from "../mgrs/GameMgr";
+import { EnemiesMgr } from "../mgrs/EnemiesMgr";
+import { Fight } from "./Fight";
 const { ccclass, property } = _decorator;
 
 export enum FACE_TO {
@@ -50,16 +54,20 @@ export class Player extends Base {
     private bulletPrefab: Prefab;
 
     #stick: Node;
-
+    #playerID: number;
     #bullets: Node;
 
-    onLoad() {
-        super.onLoad();
-        console.log("PLAYER LOADED", this.#stick);
-        const sfs = this.game.getTankUi("tank_yellow_2");
+    #shootTime = 0.5;
+    #currentTime = Date.now();
+
+    #frozen = false;
+
+    protected onEnable(): void {
+        this.#rgd = this.getComponent(RigidBody2D);
+        // console.log("PLAYER LOADED", this.#stick);
+        const sfs = this.game.getTankUi("tank_yellow_1");
         const clip = this.animation.createAnimation(sfs);
 
-        this.#rgd = this.getComponent(RigidBody2D);
         this.#body = this.node.getChildByName("body");
 
         this.#animation = this.#body.getComponent(Animation);
@@ -69,6 +77,21 @@ export class Player extends Base {
         this.#body.getComponent(Sprite).spriteFrame = sfs.sfs[0];
 
         this.#bullets = find("Canvas/game/Mask/bullets");
+
+        this.getComponent(Collider2D).on(Contact2DType.BEGIN_CONTACT, this.onColliderHandle, this);
+    }
+
+    onColliderHandle(self: Collider2D, oth: Collider2D, pos: IPhysics2DContact) {
+        if (oth.group === ContactGroup.ENEMY || oth.group === ContactGroup.ENEMY_BULLET) {
+            pos.disabled = true;
+            this.#frozen = true;
+            this.audio.effectPlay('player_bomb')
+            find("Canvas").getComponent(Fight)?.destroyAtPos(this.node.worldPosition, this.#playerID);
+            this.unBindStick();
+            this.scheduleOnce(() => {
+                this.node.destroy();
+            });
+        }
     }
 
     protected onDisable(): void {
@@ -76,8 +99,8 @@ export class Player extends Base {
         this.#animation.pause();
     }
 
-    bindStick(stickNode: Node) {
-        // console.log('BIND STICK', stickNode)
+    bindStick(stickNode: Node, id: number) {
+        this.#playerID = id;
         this.#stick = stickNode;
         // input.on(Input.EventType.KEY_DOWN, this.#onKeyHandle);
         // input.on(Input.EventType.KEY_UP, this.#onKeyHandle);
@@ -132,12 +155,15 @@ export class Player extends Base {
     }
 
     #shoot = () => {
-        this.audio.effectPlay("shoot");
-        const bullet = instantiate(this.bulletPrefab);
-        // console.log(this.node.position, this.node.worldPosition);
-        bullet.setPosition(this.node.position.clone());
-        bullet.setRotationFromEuler(this.#body.eulerAngles);
-        bullet.setParent(this.#bullets);
+        if (Date.now() - this.#currentTime > this.#shootTime * 1000) {
+            this.#currentTime = Date.now();
+            this.audio.effectPlay("shoot");
+            const bullet = instantiate(this.bulletPrefab);
+            // console.log(this.node.position, this.node.worldPosition);
+            bullet.setPosition(this.node.position.clone());
+            bullet.setRotationFromEuler(this.#body.eulerAngles);
+            bullet.setParent(this.#bullets);
+        }
     };
 
     invincible(time: number) {
@@ -150,6 +176,9 @@ export class Player extends Base {
     }
 
     protected update(dt: number): void {
+        if (this.#frozen) {
+            return;
+        }
         this.#rgd.linearVelocity = new Vec2(this.#direction.x * this.speed * dt, this.#direction.y * this.speed * dt);
     }
 

@@ -173,9 +173,9 @@
       "__uuid__": "0cd9ad67-abd4-400c-8017-881517a3ebb1@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
-    "_type": 0,
+    "_type": 2,
     "_fillType": 0,
-    "_sizeMode": 1,
+    "_sizeMode": 0,
     "_fillCenter": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -209,7 +209,7 @@
     "awakeOnLoad": true,
     "_group": 4,
     "_type": 2,
-    "_allowSleep": true,
+    "_allowSleep": false,
     "_gravityScale": 0,
     "_linearDamping": 0,
     "_angularDamping": 0,

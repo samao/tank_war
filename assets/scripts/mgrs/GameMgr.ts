@@ -1,4 +1,17 @@
-import { _decorator, Component, EventKeyboard, game, Input, input, KeyCode, Node, resources, SpriteFrame, sys, TextAsset } from "cc";
+import {
+    _decorator,
+    Component,
+    director,
+    EventKeyboard,
+    game,
+    Input,
+    input,
+    KeyCode,
+    resources,
+    SpriteFrame,
+    sys,
+    TextAsset,
+} from "cc";
 const { ccclass, property } = _decorator;
 
 export enum GameMode {
@@ -24,6 +37,8 @@ export enum ContactGroup {
     BLOCK = 1 << 3,
     FOREST = 1 << 4,
     RIVER = 1 << 5,
+    ENEMY = 1 << 6,
+    ENEMY_BULLET = 1 << 7,
 }
 
 export const BlockTexture: Record<Exclude<BLOCK, BLOCK.None>, { pic: string }> = {
@@ -84,6 +99,7 @@ export class GameMgr extends Component {
                 }
 
                 data.forEach((sf) => {
+                    sf.addRef();
                     const tankName = sf.name.replace(/_\d$/gi, "");
                     const subMap = this.#tankMap.get(tankName) ?? [];
                     subMap.push(sf);
@@ -101,17 +117,30 @@ export class GameMgr extends Component {
 
     loadSpriteFrameDir(dir: string, callback: (sfs: SpriteFrame[]) => void) {
         if (this.#sfsMap.has(dir)) {
+            // this.node.emit(GameMgr.Event_Type.Asset_Dir_Complete, dir, this.#sfsMap.get(dir));
             callback(this.#sfsMap.get(dir));
             return;
         }
-        
+
+        let cancled = false;
         resources.loadDir(dir, SpriteFrame, (err, sfs: SpriteFrame[]) => {
             if (err) {
                 return;
             }
+            sfs.forEach((sf) => {
+                sf.addRef();
+            });
             this.#sfsMap.set(dir, sfs);
-            callback(sfs);
+
+            if (!cancled) {
+                callback(sfs);
+            }
         });
+
+        /** 调用取消回调执行 */
+        return () => {
+            cancled = true;
+        };
     }
 
     getMapDataByLevel(level: number) {
@@ -129,6 +158,7 @@ export class GameMgr extends Component {
             }
 
             sfs.forEach((sf) => {
+                sf.addRef();
                 this.#blockMap.set(sf.name, sf);
             });
             // console.log(this.#blockMap);
@@ -151,6 +181,10 @@ export class GameMgr extends Component {
 
     getMode() {
         return this.#mode;
+    }
+
+    gameOver() {
+        director.loadScene("over");
     }
 
     get ready() {
