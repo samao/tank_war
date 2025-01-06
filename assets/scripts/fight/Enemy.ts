@@ -19,31 +19,10 @@ import { Base } from "../common/Base";
 import { TOWARDS } from "./Stick";
 import { FACE_TO } from "./Player";
 import { EnemiesMgr } from "../mgrs/EnemiesMgr";
-import { ContactGroup } from "../mgrs/GameMgr";
+import { ContactGroup, GameMgr, PlayerType } from "../mgrs/GameMgr";
+import { Tank, TankConfig } from "../game.conf"
+import { Bullet } from "./Bullet";
 const { ccclass, property } = _decorator;
-
-const baseConfig = {
-    name: "tank_green_1",
-    speed: 50,
-    life: 1,
-    attack: true,
-    shootGap: 2.5
-};
-export const TankConfig: (typeof baseConfig)[] = [
-    baseConfig,
-    { ...baseConfig, name: "tank_red_1" },
-    { ...baseConfig, name: "tank_red_2", speed: 90, shootGap: 1 },
-    { ...baseConfig, name: "tank_red_3" },
-    { ...baseConfig, name: "tank_red_4", life: 3 },
-    { ...baseConfig, name: "tank_white_1" },
-    { ...baseConfig, name: "tank_white_2", speed: 90, shootGap: 1 },
-    { ...baseConfig, name: "tank_white_3", life: 3 },
-    { ...baseConfig, name: "tank_yellow_1", life: 1 },
-    { ...baseConfig, name: "tank_yellow_2", life: 2 },
-    { ...baseConfig, name: "tank_yellow_3", life: 3 },
-    { ...baseConfig, name: "tank_yellow_4", life: 4 },
-    { ...baseConfig, name: "tank_yellow_5", life: 5 },
-];
 
 @ccclass("Enemy")
 export class Enemy extends Base {
@@ -64,11 +43,14 @@ export class Enemy extends Base {
 
     private currentTime = 0;
 
-    #tankConfig: typeof baseConfig;
+    #tankConfig: Tank;
 
     #lostHealth: number = 0;
 
     #idelTime = 0;
+        
+    #areaInPreSecond: Vec3 = new Vec3();
+    #distance = 0;
 
     protected onLoad(): void {
         super.onLoad();
@@ -91,6 +73,10 @@ export class Enemy extends Base {
 
         this.#rgd = this.getComponent(RigidBody2D);
         this.#bullets = find("Canvas/game/Mask/bullets");
+    }
+
+    getBounds() {
+        return this.#tankConfig.bounds;
     }
 
     randomTankMode() {
@@ -116,15 +102,27 @@ export class Enemy extends Base {
     onColliderHandle = (self: Collider2D, oth: Collider2D, ct: IPhysics2DContact) => {
         if (oth.group === ContactGroup.BULLET || oth.group === ContactGroup.PLAYER) {
             if (++this.#lostHealth >= this.#tankConfig.life) {
+
+                this.#cld.off(Contact2DType.BEGIN_CONTACT, this.onColliderHandle);
+
                 this.#frozen = true;
                 this.audio.effectPlay("tank_bomb");
+                ct.disabled = true;
+
+                if (oth.group === ContactGroup.BULLET) {
+                    // 子弹得携带信息  
+                    // console.log('碰你鸭子') 
+                    this.game.addPlayerScore(oth.node.parent.getComponent(Bullet).owner(), this.#tankConfig.bounds)
+                    this.game.enemyDie();
+                }
+
                 this.#mgr.destroyAtPos(this.node.worldPosition.clone(), this.#swapID);
 
                 this.scheduleOnce(() => {
                     this.node.destroy();
                 });
             } else {
-                this.audio.effectPlay('enemy');
+                this.audio.effectPlay('enemy', 0.2);
             }
         } else {
             this.turnDifferWay()
@@ -167,10 +165,9 @@ export class Enemy extends Base {
         // console.log(TOWARDS[this.#direct]);
         return this;
     }
-    
-    #areaInPreSecond: Vec3[] = [];
 
     protected update(dt: number): void {
+        // console.log('单吗', this.#frozen)
         if (!this.#frozen) {
             this.#rgd.linearVelocity = towardsToVelocity(this.#direct)
                 .multiplyScalar(this.#tankConfig.speed * dt)
@@ -182,24 +179,26 @@ export class Enemy extends Base {
                 this.#shoot();
             }
         }
-
-        if (this.#areaInPreSecond.length === 0) {
-            this.node.getPosition(this.#areaInPreSecond[0])
-            this.node.getPosition(this.#areaInPreSecond[1])
+        
+        if (this.#areaInPreSecond.equals(Vec3.ZERO)) {
+            this.node.getWorldPosition(this.#areaInPreSecond)
         } else {
             this.#idelTime += dt;
-            if (this.#idelTime > 1) {
+            if (this.#idelTime > 2) {
                 this.#idelTime = 0;
-                const area = Vec3.subtract(new Vec3(), this.#areaInPreSecond[1], this.#areaInPreSecond[0]);
-                if (area.x * area.y > 10) {
-                    this.#areaInPreSecond.length = 0;
+                // console.log('能赶上', this.#distance)
+                if (this.#distance > 8) {
+                    //活着
+                    this.#distance = 0;
                 } else {
-                    console.log('待的太久了')
+                    // console.log('太妈妈daile')
                     this.turnDifferWay();
                 }
             } else {
-                Vec3.min(this.#areaInPreSecond[0], this.#areaInPreSecond[0], this.node.position);
-                Vec3.max(this.#areaInPreSecond[1], this.#areaInPreSecond[1], this.node.position);
+                Vec3.subtract(this.#areaInPreSecond, this.node.worldPosition, this.#areaInPreSecond)
+                this.#distance += Math.abs(this.#areaInPreSecond.x) + Math.abs(this.#areaInPreSecond.y);
+                this.node.getWorldPosition(this.#areaInPreSecond)
+                // console.log('家就玩了', this.#distance)
             }
         }
     }

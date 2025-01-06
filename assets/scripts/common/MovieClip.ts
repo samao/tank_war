@@ -35,7 +35,7 @@ export class MovieClip extends Base {
                 // animation.clips.push(clip);
                 animation.defaultClip = clip;
             } catch (e) {
-                console.warn(e);
+                // console.warn(e);
             }
         });
     }

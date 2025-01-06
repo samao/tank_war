@@ -32,6 +32,7 @@ export class Block extends Base {
     #onCollider = (self: BoxCollider2D, oth: BoxCollider2D, ct: IPhysics2DContact) => {
         // console.log('被大众：', oth.group, ContactGroup.BULLET, this.#type, this.#type === BLOCK.Wall)
         if ((oth.group === ContactGroup.BULLET || oth.group === ContactGroup.ENEMY_BULLET) && [BLOCK.Wall, BLOCK.Ice, BLOCK.Camp].indexOf(this.#type) !== -1) {
+            this.#cld.off(Contact2DType.BEGIN_CONTACT, this.#onCollider);
             if (this.#type === BLOCK.Camp) {
                 this.#changeBrokenTexture();
 
@@ -50,7 +51,7 @@ export class Block extends Base {
     };
 
     #changeBrokenTexture() {
-        this.audio.effectPlay('camp_bomb')
+        this.audio.effectPlay('use_bomb')
         this.getComponent(Sprite).spriteFrame = this.game.getBlockTexture(BLOCK.Camp_BROKEN);
     }
 

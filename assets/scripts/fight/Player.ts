@@ -25,9 +25,10 @@ import {
 } from "cc";
 import { Base } from "../common/Base";
 import { Stick, TOWARDS } from "./Stick";
-import { ContactGroup } from "../mgrs/GameMgr";
+import { ContactGroup, GameMgr, PlayerType } from "../mgrs/GameMgr";
 import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 import { Fight } from "./Fight";
+import { Bullet } from "./Bullet";
 const { ccclass, property } = _decorator;
 
 export enum FACE_TO {
@@ -57,10 +58,14 @@ export class Player extends Base {
     #playerID: number;
     #bullets: Node;
 
-    #shootTime = 0.5;
+    #shootTime = 0.3;
     #currentTime = Date.now();
 
     #frozen = false;
+
+    playerType: PlayerType;
+
+    #invincibling = true;
 
     protected onEnable(): void {
         this.#rgd = this.getComponent(RigidBody2D);
@@ -83,10 +88,19 @@ export class Player extends Base {
 
     onColliderHandle(self: Collider2D, oth: Collider2D, pos: IPhysics2DContact) {
         if (oth.group === ContactGroup.ENEMY || oth.group === ContactGroup.ENEMY_BULLET) {
+            if (this.#invincibling) {
+                return;
+            }
+
+            this.getComponent(Collider2D).off(Contact2DType.BEGIN_CONTACT, this.onColliderHandle, this);
             pos.disabled = true;
             this.#frozen = true;
+
             this.audio.effectPlay('player_bomb')
+            this.game.discountLife(this.playerType)
+            
             find("Canvas").getComponent(Fight)?.destroyAtPos(this.node.worldPosition, this.#playerID);
+
             this.unBindStick();
             this.scheduleOnce(() => {
                 this.node.destroy();
@@ -163,6 +177,7 @@ export class Player extends Base {
             bullet.setPosition(this.node.position.clone());
             bullet.setRotationFromEuler(this.#body.eulerAngles);
             bullet.setParent(this.#bullets);
+            bullet.getComponent(Bullet).belongTo(this.playerType);
         }
     };
 
@@ -170,8 +185,10 @@ export class Player extends Base {
         // console.log('无敌了');
         const invincible = this.node.getChildByName("invincible");
         invincible.active = true;
+        this.#invincibling = true
         this.scheduleOnce(() => {
             invincible.active = false;
+            this.#invincibling = false;
         }, time);
     }
 

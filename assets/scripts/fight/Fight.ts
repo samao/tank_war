@@ -1,28 +1,12 @@
-import {
-    _decorator,
-    Camera,
-    Contact2DType,
-    find,
-    instantiate,
-    Label,
-    math,
-    Node,
-    Prefab,
-    Size,
-    Sprite,
-    SpriteFrame,
-    sys,
-    UITransform,
-    Vec2,
-    Vec3,
-} from "cc";
+import { _decorator, Camera, director, find, instantiate, Label, Node, Prefab, Size, Sprite, sys, UITransform, Vec2, Vec3 } from "cc";
 import { Base } from "../common/Base";
-import { GameMode, BLOCK, BlockTexture } from "../mgrs/GameMgr";
+import { GameMode, BLOCK, BlockTexture, GameMgr, PlayerType } from "../mgrs/GameMgr";
 import { Block } from "./Block";
 import { Player } from "./Player";
 import { MovieClip } from "../common/MovieClip";
 import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 import { Stick } from "./Stick";
+import { TOTAL_LEVELS } from "../game.conf";
 const { ccclass, property } = _decorator;
 
 const SCREEN = new Size(208, 208);
@@ -60,7 +44,7 @@ export class Fight extends Base {
     private playerPrefab: Prefab;
 
     @property({ displayName: "出生无敌时间" })
-    private invincibleTime = 3;
+    private invincibleTime = 5;
 
     #playerSticks: Map<Player, Node> = new Map();
 
@@ -93,6 +77,8 @@ export class Fight extends Base {
         this.game.loadAllBlockTexture(() => {
             this.createGameMap();
         });
+
+        this.game.node.on(GameMgr.EventType.NEXT_STAGE, this.nextLevel);
     }
 
     protected onDestroy(): void {
@@ -102,6 +88,7 @@ export class Fight extends Base {
 
     protected onDisable(): void {
         console.log("FIGHT DISABLE");
+        this.game.node.off(GameMgr.EventType.NEXT_STAGE, this.nextLevel);
         this.#disConnectStick();
         this.unscheduleAllCallbacks();
     }
@@ -125,7 +112,11 @@ export class Fight extends Base {
         }
     }
 
-    nextLevel() {
+    nextLevel = () => {
+        if (this.#level >= TOTAL_LEVELS) {
+            director.loadScene('win');
+            return;
+        }
         this.#level++;
         this.#removeAll();
         this.createGameMap();
@@ -148,11 +139,14 @@ export class Fight extends Base {
         this.audio.effectPlay("game_start");
         this.levelUI.active = true;
         this.stageLabel.string = this.#level + "";
+
+        this.game.setGameLevel(this.#level)
+
         find("Canvas/ui").active = false;
 
-        await new Promise<void>((resolve) => {
-            this.scheduleOnce(resolve, 3);
-        });
+        await new Promise((res) => {
+            this.scheduleOnce(res, 3);
+        })
 
         this.levelUI.active = false;
         find("Canvas/ui").active = true;
@@ -188,7 +182,7 @@ export class Fight extends Base {
             const movie = instantiate(this.movieClip).getComponent(MovieClip);
             movie.node.setPosition(point);
             movie.node.setParent(swapPoint);
-            movie.node.setScale(0.8, 0.8)
+            movie.node.setScale(0.8, 0.8);
             movie.bindDir("star");
 
             movie.node.active = false;
@@ -256,8 +250,9 @@ export class Fight extends Base {
             p1stick.getComponent(Stick).hidenVirUI();
             playerCMP.bindStick(p1stick, id);
             playerCMP.invincible(this.invincibleTime);
+            playerCMP.playerType = id !== 0 && this.game.getMode() === GameMode.DOUBLE ? PlayerType.PLAYER_2 : PlayerType.PLAYER_1;
             this.#playerSticks.set(playerCMP, p1stick);
-        }, 2);
+        }, 1);
     };
 
     private createPlayerTank() {
@@ -272,7 +267,7 @@ export class Fight extends Base {
         const playerCMP = player.getComponent(Player);
         playerCMP.bindStick(p1stick, 0);
         playerCMP.invincible(this.invincibleTime);
-
+        playerCMP.playerType = PlayerType.PLAYER_1;
         this.#playerSticks.set(playerCMP, p1stick);
 
         if (this.game.getMode() === GameMode.DOUBLE) {
@@ -286,7 +281,7 @@ export class Fight extends Base {
             const playerCMP = player2.getComponent(Player);
             playerCMP.bindStick(p2stick, 1);
             playerCMP.invincible(this.invincibleTime);
-
+            playerCMP.playerType = PlayerType.PLAYER_2;
             this.#playerSticks.set(playerCMP, p2stick);
         }
     }
