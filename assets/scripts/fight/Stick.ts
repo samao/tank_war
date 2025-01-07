@@ -1,4 +1,27 @@
-import { _decorator, Component, Enum, EventKeyboard, EventTouch, find, Input, input, KeyCode, misc, Node, NodeEventType, Rect, sys, UITransform, Vec2, Vec3 } from "cc";
+import {
+    _decorator,
+    Camera,
+    Component,
+    Enum,
+    EventKeyboard,
+    EventTouch,
+    find,
+    Input,
+    input,
+    instantiate,
+    KeyCode,
+    misc,
+    Node,
+    NodeEventType,
+    Prefab,
+    Rect,
+    sys,
+    UITransform,
+    Vec2,
+    Vec3,
+} from "cc";
+import { Base } from "../common/Base";
+import { GameMgr, GameMode, PlayerType } from "../mgrs/GameMgr";
 const { ccclass, property } = _decorator;
 
 @ccclass("CTR_KEY")
@@ -47,7 +70,16 @@ export class Stick extends Component {
     @property(Node)
     private fireBtn: Node;
 
+    @property({ type: Prefab, displayName: "控制器红点" })
+    private ctlCenter: Prefab;
+
+    private ctlDot: Node;
+
     #degressOffset = 0;
+
+    #targetUser: PlayerType = PlayerType.PLAYER_1;
+
+    private isTouching = false;
 
     protected onLoad(): void {
         this.#areas.push(
@@ -55,26 +87,33 @@ export class Stick extends Component {
                 return this.node.getChildByName(cpn);
             })
         );
+
+        this.ctlDot = instantiate(this.ctlCenter);
     }
 
     hidenVirUI(degressOffset = 0) {
-        console.log('设备类型：', sys.isMobile);
-        this.#areas.forEach(n => n.active = false);
+        console.log("设备类型：", sys.isMobile);
+        this.#areas.forEach((n) => (n.active = false));
         this.fireBtn.active = sys.isMobile;
         this.#degressOffset = degressOffset;
+        return this;
     }
 
-    private isTouching = false;
+    setUserType(type: PlayerType) {
+        this.#targetUser = type;
+    }
 
     protected onEnable(): void {
-        this.node.on(NodeEventType.TOUCH_START, this.onTouchStart);
-        this.node.on(NodeEventType.TOUCH_MOVE, this.onTouchMove);
-        this.node.on(NodeEventType.TOUCH_END, this.onTouchEnd);
-        this.node.on(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
-        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle)
-
-        input.on(Input.EventType.KEY_DOWN, this.#onKeyDown)
-        input.on(Input.EventType.KEY_UP, this.#onKeyDown)
+        if (sys.isMobile) {
+            this.node.on(NodeEventType.TOUCH_START, this.onTouchStart);
+            this.node.on(NodeEventType.TOUCH_MOVE, this.onTouchMove);
+            this.node.on(NodeEventType.TOUCH_END, this.onTouchEnd);
+            this.node.on(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
+            this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle);
+        } else {
+            input.on(Input.EventType.KEY_DOWN, this.#onKeyDown);
+            input.on(Input.EventType.KEY_UP, this.#onKeyDown);
+        }
     }
 
     protected onDisable(): void {
@@ -82,27 +121,53 @@ export class Stick extends Component {
         this.node.off(NodeEventType.TOUCH_MOVE, this.onTouchMove);
         this.node.off(NodeEventType.TOUCH_END, this.onTouchEnd);
         this.node.off(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
-        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle)
+        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle);
 
-        input.off(Input.EventType.KEY_DOWN, this.#onKeyDown)
-        input.off(Input.EventType.KEY_UP, this.#onKeyDown)
+        input.off(Input.EventType.KEY_DOWN, this.#onKeyDown);
+        input.off(Input.EventType.KEY_UP, this.#onKeyDown);
     }
 
     onTouchStart = (e: EventTouch) => {
         this.isTouching = true;
-        // console.log("START: ", e.getStartLocation());
+        // console.log("TOUCH", e.touch.getLocation(), e.touch.getLocationInView(), e.touch.getUILocation());
+        // console.log(
+        //     "EVENT",
+        //     this.node.inverseTransformPoint(new Vec3(), e.getLocation().toVec3()),
+        //     this.node.inverseTransformPoint(new Vec3(), e.getLocationInView().toVec3()),
+        //     this.node.inverseTransformPoint(new Vec3(), e.getUILocation().toVec3())
+        // );
+        // console.log("CTL", this.ctlDot.position, this.ctlDot.worldPosition);
+        // const pos = this.node.inverseTransformPoint(new Vec3(), e.getUILocation().toVec3());
+        this.ctlDot.parent = this.node;
+        this.ctlDot.setWorldPosition(this.getScreenPoint(e.touch.getLocation().toVec3()));
+        this.ctlDot.layer = this.#targetUser === PlayerType.PLAYER_1 ? 1 << 0 : 1 << 1;
     };
+
+    private getScreenPoint(pos: Vec3) {
+        let cam: Camera;
+        if (this.getGameMode() === GameMode.DOUBLE) {
+            cam = find(`Canvas/CameraPlayer${this.#targetUser === PlayerType.PLAYER_1 ? "1" : "2"}`).getComponent(Camera);
+        } else {
+            cam = find(`Canvas/Camera`).getComponent(Camera);
+        }
+        // console.log('cam is', cam);
+        return cam.screenToWorld(pos);
+    }
+
+    private getGameMode() {
+        return find("ref").getComponent(GameMgr).getMode();
+    }
 
     onTouchMove = (e: EventTouch) => {
         if (this.isTouching) {
             const dir = e.touch.getLocation().subtract(e.getStartLocation()).normalize();
             const degress = (dir.y > 0 ? 1 : -1) * misc.radiansToDegrees(dir.angle(Vec2.UNIT_X)) - this.#degressOffset;
-            // console.log(degress);
-            if(degress > -135 && degress <= -45) {
+            this.ctlDot.setRotationFromEuler(new Vec3(0, 0, degress));
+            if (degress > -135 && degress <= -45) {
                 this.node.emit(Stick.EventType.TOUCHING, TOWARDS.DOWN);
             } else if (degress > -45 && degress <= 45) {
                 this.node.emit(Stick.EventType.TOUCHING, TOWARDS.RIGHT);
-            } else if(degress > 45 && degress <= 135) {
+            } else if (degress > 45 && degress <= 135) {
                 this.node.emit(Stick.EventType.TOUCHING, TOWARDS.UP);
             } else {
                 this.node.emit(Stick.EventType.TOUCHING, TOWARDS.LEFT);
@@ -113,6 +178,7 @@ export class Stick extends Component {
     onTouchEnd = (e: EventTouch) => {
         this.isTouching = false;
         this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
+        this.ctlDot.parent = null;
     };
 
     protected onEnable_bk(): void {
@@ -121,7 +187,7 @@ export class Stick extends Component {
             node.on(Input.EventType.TOUCH_END, this.#onTouchEnd);
             node.on(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
         });
-        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle)
+        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle);
     }
 
     protected onDisable_BK(): void {
@@ -130,20 +196,20 @@ export class Stick extends Component {
             node.off(Input.EventType.TOUCH_END, this.#onTouchEnd);
             node.off(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
         });
-        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle)
+        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle);
 
-        input.off(Input.EventType.KEY_DOWN, this.#onKeyDown)
-        input.off(Input.EventType.KEY_UP, this.#onKeyDown)
+        input.off(Input.EventType.KEY_DOWN, this.#onKeyDown);
+        input.off(Input.EventType.KEY_UP, this.#onKeyDown);
     }
 
     protected start(): void {
-        console.log('onEnabled', this.node.active);
+        console.log("onEnabled", this.node.active);
     }
 
     #fireHandle = (e: EventTouch) => {
         e.propagationStopped = true;
         this.node.emit(Stick.EventType.SHOOTING);
-    }
+    };
 
     #onKeyDown = (e: EventKeyboard) => {
         if (e.type === Input.EventType.KEY_UP && this.ctrKeyConfig.isCTRKey(e.keyCode)) {
@@ -176,11 +242,8 @@ export class Stick extends Component {
             down: TOWARDS.DOWN,
             left: TOWARDS.LEFT,
             right: TOWARDS.RIGHT,
-        }
-        this.node.emit(
-            Stick.EventType.TOUCHING,
-            map[e.currentTarget.name]
-        );
+        };
+        this.node.emit(Stick.EventType.TOUCHING, map[e.currentTarget.name]);
     };
 
     #onTouchEnd = (e: EventTouch) => {

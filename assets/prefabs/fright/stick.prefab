@@ -48,8 +48,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 3.1,
-      "y": 11.9,
+      "x": 0,
+      "y": 0,
       "z": 0
     },
     "_lrot": {
@@ -61,8 +61,8 @@
     },
     "_lscale": {
       "__type__": "cc.Vec3",
-      "x": 2,
-      "y": 2,
+      "x": 1,
+      "y": 1,
       "z": 1
     },
     "_mobility": 0,
@@ -840,6 +840,10 @@
     "fireBtn": {
       "__id__": 26
     },
+    "ctlCenter": {
+      "__uuid__": "a0eaa5bb-6f14-456f-b8c7-c3a714f203be",
+      "__expectedType__": "cc.Prefab"
+    },
     "_id": ""
   },
   {
@@ -863,6 +867,7 @@
       "__id__": 0
     },
     "fileId": "65vq3H8jdBaKMm7hMJF8IS",
+    "instance": null,
     "targetOverrides": null
   }
 ]
