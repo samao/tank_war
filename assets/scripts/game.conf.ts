@@ -25,7 +25,7 @@ export const TankConfig: Tank[] = [
     { ...baseConfig, name: "tank_yellow_5", life: 5 },
 ];
 
-export const ENEMY_TOTAL_PER_LEVEL = 5;
+export const ENEMY_TOTAL_PER_LEVEL = 15;
 export const PLAYER_LIFE_TOTAL = 8;
 
 export const TOTAL_LEVELS = 36;

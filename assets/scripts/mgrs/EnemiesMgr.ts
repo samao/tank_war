@@ -48,19 +48,21 @@ export class EnemiesMgr extends Component {
 
     protected onDisable(): void {
         this.unschedule(this._interCreate);
-        // this.unscheduleAllCallbacks();
+        this.unschedule(this.#generateOneAtSwap);
         this.destroyAll();
     }
 
     #generateOneAtSwap = (swap: Node, position: Vec3, id: number) => {
-        swap.active = true;
-        this.scheduleOnce(this._interCreate.bind(this, swap, position, id), 1);
+        if (this.#game.enemyWaitCount() > 0) {
+            swap.active = true;
+            this.scheduleOnce(this._interCreate.bind(this, swap, position, id), 1);
+        }
     };
 
     _interCreate = (swap: Node, position: Vec3, id: number) => {
-        // console.log('create one enemy', this.#game.enemyCount())
         swap.active = false;
         this.#game.reduceWaitCount();
+        this.#game.dump();
         const enemy = instantiate(this.enemyPrefab);
         enemy.setPosition(position);
         enemy.setParent(this.enemiesLayer);
@@ -83,9 +85,7 @@ export class EnemiesMgr extends Component {
 
         // console.log(this.#game.enemyWaitCount(), this.enemiesLayer.children.length);
         if (this.#game.enemyWaitCount() > 0) {
-            this.scheduleOnce(() => {
-                this.#generateOneAtSwap(this.#swaps[id], this.#positions[id], id);
-            }, 2.5);
+            this.scheduleOnce(this.#generateOneAtSwap.bind(this, this.#swaps[id], this.#positions[id], id), 2.5);
         }
     };
 

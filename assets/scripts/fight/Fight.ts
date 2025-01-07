@@ -113,6 +113,7 @@ export class Fight extends Base {
     }
 
     nextLevel = () => {
+        this.audio.stopAll();
         if (this.#level >= TOTAL_LEVELS) {
             director.loadScene('win');
             return;
@@ -263,7 +264,7 @@ export class Fight extends Base {
         player.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
         player.setParent(this.players);
         const p1stick = find("Canvas/ui/sticks/player1");
-        p1stick.getComponent(Stick).hidenVirUI();
+        p1stick.getComponent(Stick).hidenVirUI(this.game.getMode() === GameMode.DOUBLE ? -90 : 0);
         const playerCMP = player.getComponent(Player);
         playerCMP.bindStick(p1stick, 0);
         playerCMP.invincible(this.invincibleTime);
@@ -277,7 +278,7 @@ export class Fight extends Base {
             player2.setParent(this.players);
             const p2stick = find("Canvas/ui/sticks/player2");
             p2stick.active = true;
-            p2stick.getComponent(Stick).hidenVirUI();
+            p2stick.getComponent(Stick).hidenVirUI(90);
             const playerCMP = player2.getComponent(Player);
             playerCMP.bindStick(p2stick, 1);
             playerCMP.invincible(this.invincibleTime);

@@ -98,6 +98,7 @@ export class Player extends Base {
 
             this.audio.effectPlay('player_bomb')
             this.game.discountLife(this.playerType)
+            this.#direction.set(0, 0);
             
             find("Canvas").getComponent(Fight)?.destroyAtPos(this.node.worldPosition, this.#playerID);
 

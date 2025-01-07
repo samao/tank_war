@@ -1,10 +1,12 @@
 import { _decorator, Component, director, find, Node } from 'cc';
-// import { AudioMgr } from '../mgrs/AudioMgr';
-// import { Base } from '../common/Base';
+import { Base } from '../common/Base';
 const { ccclass, property } = _decorator;
 
 @ccclass('Win')
-export class Win extends Component {
+export class Win extends Base {
+    protected start(): void {
+        this.audio.stopAll();
+    }
     gotoMenu() {
         director.loadScene('menu')
     }

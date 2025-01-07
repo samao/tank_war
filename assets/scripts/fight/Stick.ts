@@ -1,4 +1,4 @@
-import { _decorator, Component, Enum, EventKeyboard, EventTouch, find, Input, input, KeyCode, Node, NodeEventType, Rect, sys, UITransform, Vec3 } from "cc";
+import { _decorator, Component, Enum, EventKeyboard, EventTouch, find, Input, input, KeyCode, misc, Node, NodeEventType, Rect, sys, UITransform, Vec2, Vec3 } from "cc";
 const { ccclass, property } = _decorator;
 
 @ccclass("CTR_KEY")
@@ -33,8 +33,6 @@ export enum TOWARDS {
 
 @ccclass("Stick")
 export class Stick extends Component {
-    #touching = false;
-
     static EventType = {
         /** 0↑, 1↓, 2←, 3→, 4cancel*/
         TOUCHING: "touching",
@@ -49,6 +47,8 @@ export class Stick extends Component {
     @property(Node)
     private fireBtn: Node;
 
+    #degressOffset = 0;
+
     protected onLoad(): void {
         this.#areas.push(
             ...["up", "down", "left", "right"].map((cpn) => {
@@ -57,18 +57,20 @@ export class Stick extends Component {
         );
     }
 
-    hidenVirUI() {
+    hidenVirUI(degressOffset = 0) {
         console.log('设备类型：', sys.isMobile);
-        this.#areas.forEach(n => n.active = sys.isMobile);
+        this.#areas.forEach(n => n.active = false);
         this.fireBtn.active = sys.isMobile;
+        this.#degressOffset = degressOffset;
     }
 
+    private isTouching = false;
+
     protected onEnable(): void {
-        this.#areas.forEach((node) => {
-            node.on(Input.EventType.TOUCH_START, this.#onTouchStart);
-            node.on(Input.EventType.TOUCH_END, this.#onTouchEnd);
-            node.on(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
-        });
+        this.node.on(NodeEventType.TOUCH_START, this.onTouchStart);
+        this.node.on(NodeEventType.TOUCH_MOVE, this.onTouchMove);
+        this.node.on(NodeEventType.TOUCH_END, this.onTouchEnd);
+        this.node.on(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
         this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle)
 
         input.on(Input.EventType.KEY_DOWN, this.#onKeyDown)
@@ -76,6 +78,53 @@ export class Stick extends Component {
     }
 
     protected onDisable(): void {
+        this.node.off(NodeEventType.TOUCH_START, this.onTouchStart);
+        this.node.off(NodeEventType.TOUCH_MOVE, this.onTouchMove);
+        this.node.off(NodeEventType.TOUCH_END, this.onTouchEnd);
+        this.node.off(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
+        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle)
+
+        input.off(Input.EventType.KEY_DOWN, this.#onKeyDown)
+        input.off(Input.EventType.KEY_UP, this.#onKeyDown)
+    }
+
+    onTouchStart = (e: EventTouch) => {
+        this.isTouching = true;
+        // console.log("START: ", e.getStartLocation());
+    };
+
+    onTouchMove = (e: EventTouch) => {
+        if (this.isTouching) {
+            const dir = e.touch.getLocation().subtract(e.getStartLocation()).normalize();
+            const degress = (dir.y > 0 ? 1 : -1) * misc.radiansToDegrees(dir.angle(Vec2.UNIT_X)) - this.#degressOffset;
+            // console.log(degress);
+            if(degress > -135 && degress <= -45) {
+                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.DOWN);
+            } else if (degress > -45 && degress <= 45) {
+                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.RIGHT);
+            } else if(degress > 45 && degress <= 135) {
+                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.UP);
+            } else {
+                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.LEFT);
+            }
+        }
+    };
+
+    onTouchEnd = (e: EventTouch) => {
+        this.isTouching = false;
+        this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
+    };
+
+    protected onEnable_bk(): void {
+        this.#areas.forEach((node) => {
+            node.on(Input.EventType.TOUCH_START, this.#onTouchStart);
+            node.on(Input.EventType.TOUCH_END, this.#onTouchEnd);
+            node.on(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
+        });
+        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle)
+    }
+
+    protected onDisable_BK(): void {
         this.#areas.forEach((node) => {
             node.off(Input.EventType.TOUCH_START, this.#onTouchStart);
             node.off(Input.EventType.TOUCH_END, this.#onTouchEnd);
@@ -91,7 +140,8 @@ export class Stick extends Component {
         console.log('onEnabled', this.node.active);
     }
 
-    #fireHandle = () => {
+    #fireHandle = (e: EventTouch) => {
+        e.propagationStopped = true;
         this.node.emit(Stick.EventType.SHOOTING);
     }
 

@@ -61,7 +61,7 @@ export enum PlayerType {
     PLAYER_2,
 }
 
-const LIFE_AWARD_GAP = 500;
+const LIFE_AWARD_GAP = 1000;
 
 @ccclass("GameMgr")
 export class GameMgr extends Component {
@@ -101,12 +101,20 @@ export class GameMgr extends Component {
         }
     }
 
+    dump() {
+        console.log('当前还未生成数量:', this.#enemy_wait_create_cnt, '已经死掉的：', this.#enemy_die_count);
+    }
+
     reduceWaitCount(val = 1) {
         this.#enemy_wait_create_cnt = math.clamp(this.#enemy_wait_create_cnt - val, 0, ENEMY_TOTAL_PER_LEVEL);
     }
 
     enemyWaitCount() {
         return this.#enemy_wait_create_cnt;
+    }
+
+    addWaitCount() {
+        this.#enemy_wait_create_cnt += 1;
     }
 
     setGameLevel = (lv: number) => {
@@ -130,7 +138,7 @@ export class GameMgr extends Component {
             this.node.emit(GameMgr.EventType.PLAYER_LIFE_LOST, target);
         }
 
-        if (this.#playerinfo.life === 0 && this.#player2info.life === 0) {
+        if(this.#mode === GameMode.SINGLE && this.#playerinfo.life === 0 || this.#playerinfo.life === 0 && this.#player2info.life === 0) {
             this.gameOver();
         }
     };
@@ -168,7 +176,7 @@ export class GameMgr extends Component {
                 this.#enemy_die_count = 0;
                 this.#enemy_wait_create_cnt = ENEMY_TOTAL_PER_LEVEL;
                 this.node.emit(GameMgr.EventType.NEXT_STAGE);
-            }, 2);
+            }, 1);
         }
     };
 

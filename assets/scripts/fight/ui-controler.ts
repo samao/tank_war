@@ -1,6 +1,6 @@
-import { _decorator, Component, Label, Node, Sprite, SpriteFrame, UITransform } from "cc";
+import { _decorator, Component, find, Label, Node, Sprite, SpriteFrame, UITransform } from "cc";
 import { Base } from "../common/Base";
-import { GameMgr, PlayerType } from "../mgrs/GameMgr";
+import { GameMgr, GameMode, PlayerType } from "../mgrs/GameMgr";
 import { ENEMY_TOTAL_PER_LEVEL, PLAYER_LIFE_TOTAL } from "../game.conf";
 const { ccclass, property } = _decorator;
 
@@ -135,6 +135,8 @@ export class ui_controler extends Base {
             node.getComponent(UITransform).setContentSize(7, 7);
             node.setParent(this.playerinfo_1.lifeTag);
         }
+
+        find('Canvas/ui/player-info/p2info').active = this.game.getMode() === GameMode.DOUBLE;
 
         this.playerinfo_2.score.string = "积分:" + this.player2Score;
 

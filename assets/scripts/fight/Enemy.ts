@@ -114,6 +114,8 @@ export class Enemy extends Base {
                     // console.log('碰你鸭子') 
                     this.game.addPlayerScore(oth.node.parent.getComponent(Bullet).owner(), this.#tankConfig.bounds)
                     this.game.enemyDie();
+                } else {
+                    this.game.addWaitCount();
                 }
 
                 this.#mgr.destroyAtPos(this.node.worldPosition.clone(), this.#swapID);

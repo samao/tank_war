@@ -42,4 +42,9 @@ export class AudioMgr extends Component {
         const clip = this.#map.get(name);
         this.#effect.playOneShot(clip, volume);
     }
+
+    stopAll() {
+        this.#audioSource.stop();
+        this.#effect.stop();
+    }
 }
