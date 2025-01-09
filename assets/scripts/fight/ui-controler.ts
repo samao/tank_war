@@ -77,11 +77,13 @@ export class ui_controler extends Base {
     private discountPlayerLife = (id = 0) => {
         if (id === 0) {
             this.playerlife--;
-            this.playerinfo_1.lifeTag.children.pop()
+            // this.playerinfo_1.lifeTag.children.pop().parent = null;
             // last.destroy();
+            this.removeLastChild(this.playerinfo_1.lifeTag)
         } else {
             this.player2life--;
-            this.playerinfo_2.lifeTag.children.pop();
+            // this.playerinfo_2.lifeTag.children.pop().parent = null;
+            this.removeLastChild(this.playerinfo_2.lifeTag)
             // last.destroy();
         }
     }
@@ -104,7 +106,8 @@ export class ui_controler extends Base {
 
     private dicountEnemy = () => {
         this.enemyCount--;
-        this.enumTags.children.pop();
+        // this.enumTags.children.pop().parent = null;
+        this.removeLastChild(this.enumTags);
     };
 
     private createPlayerlife = (id: PlayerType) => {
@@ -121,6 +124,13 @@ export class ui_controler extends Base {
             node.addComponent(Sprite).spriteFrame = this.tankSpriteFrame.enemy;
             node.getComponent(UITransform).setContentSize(7, 7);
             node.setParent(this.enumTags);
+        }
+    }
+
+    private removeLastChild(parentNode: Node) {
+        if (parentNode.children.length > 0) {
+            const lastChild = parentNode.children[parentNode.children.length - 1];
+            lastChild.removeFromParent();
         }
     }
 

@@ -25,7 +25,11 @@ export const TankConfig: Tank[] = [
     { ...baseConfig, name: "tank_yellow_5", life: 5 },
 ];
 
-export const ENEMY_TOTAL_PER_LEVEL = 15;
+// 每一关的敌方坦克数
+export const ENEMY_TOTAL_PER_LEVEL = 8;
+// 每个玩家的命
 export const PLAYER_LIFE_TOTAL = 8;
-
+// 总关数
 export const TOTAL_LEVELS = 36;
+// 奖励命的分数间隔
+export const LIFE_AWARD_GAP = 1000;

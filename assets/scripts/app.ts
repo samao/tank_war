@@ -2,6 +2,7 @@ import { _decorator, Component, director, find, Node } from 'cc';
 import { AudioMgr } from './mgrs/AudioMgr';
 import { GameMgr } from './mgrs/GameMgr';
 import { AnimationMgr } from './mgrs/AnimationMgr';
+import { setup } from './mgrs/toast';
 const { ccclass, property } = _decorator;
 
 @ccclass('app')
@@ -17,6 +18,8 @@ export class app extends Component {
             node.addComponent(AudioMgr);
             node.addComponent(GameMgr);
             node.addComponent(AnimationMgr);
+            setup(node);
+
             console.log('APP Mount')
         }
     }

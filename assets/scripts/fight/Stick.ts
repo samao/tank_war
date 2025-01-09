@@ -81,6 +81,8 @@ export class Stick extends Component {
 
     private isTouching = false;
 
+    private touchID: any;
+
     protected onLoad(): void {
         this.#areas.push(
             ...["up", "down", "left", "right"].map((cpn) => {
@@ -128,19 +130,14 @@ export class Stick extends Component {
     }
 
     onTouchStart = (e: EventTouch) => {
-        this.isTouching = true;
-        // console.log("TOUCH", e.touch.getLocation(), e.touch.getLocationInView(), e.touch.getUILocation());
-        // console.log(
-        //     "EVENT",
-        //     this.node.inverseTransformPoint(new Vec3(), e.getLocation().toVec3()),
-        //     this.node.inverseTransformPoint(new Vec3(), e.getLocationInView().toVec3()),
-        //     this.node.inverseTransformPoint(new Vec3(), e.getUILocation().toVec3())
-        // );
-        // console.log("CTL", this.ctlDot.position, this.ctlDot.worldPosition);
-        // const pos = this.node.inverseTransformPoint(new Vec3(), e.getUILocation().toVec3());
-        this.ctlDot.parent = this.node;
-        this.ctlDot.setWorldPosition(this.getScreenPoint(e.touch.getLocation().toVec3()));
-        this.ctlDot.layer = this.#targetUser === PlayerType.PLAYER_1 ? 1 << 0 : 1 << 1;
+        console.log('onTouchStart', e.touch.getID(), this.touchID);
+        if(typeof this.touchID === 'undefined') {
+            this.isTouching = true;
+            this.ctlDot.parent = this.node;
+            this.ctlDot.setWorldPosition(this.getScreenPoint(e.touch.getLocation().toVec3()));
+            this.ctlDot.layer = this.#targetUser === PlayerType.PLAYER_1 ? 1 << 0 : 1 << 1;
+            this.touchID = e.touch.getID();
+        }
     };
 
     private getScreenPoint(pos: Vec3) {
@@ -159,7 +156,7 @@ export class Stick extends Component {
     }
 
     onTouchMove = (e: EventTouch) => {
-        if (this.isTouching) {
+        if (this.isTouching && e.touch.getID() === this.touchID) {
             const dir = e.touch.getLocation().subtract(e.getStartLocation()).normalize();
             const degress = (dir.y > 0 ? 1 : -1) * misc.radiansToDegrees(dir.angle(Vec2.UNIT_X)) - this.#degressOffset;
             this.ctlDot.setRotationFromEuler(new Vec3(0, 0, degress));
@@ -176,9 +173,14 @@ export class Stick extends Component {
     };
 
     onTouchEnd = (e: EventTouch) => {
-        this.isTouching = false;
-        this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
-        this.ctlDot.parent = null;
+        console.log('onTouchEnd', e.touch.getID())
+        if (this.touchID === e.touch.getID()) {
+            console.log('取消')
+            this.isTouching = false;
+            this.touchID = undefined;
+            this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
+            this.ctlDot.parent = null;
+        }
     };
 
     protected onEnable_bk(): void {

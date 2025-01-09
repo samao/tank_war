@@ -14,8 +14,7 @@ import {
     sys,
     TextAsset,
 } from "cc";
-import { ENEMY_TOTAL_PER_LEVEL, PLAYER_LIFE_TOTAL } from "../game.conf";
-import { Fight } from "../fight/Fight";
+import { ENEMY_TOTAL_PER_LEVEL, LIFE_AWARD_GAP, PLAYER_LIFE_TOTAL } from "../game.conf";
 import { AudioMgr } from "./AudioMgr";
 const { ccclass, property } = _decorator;
 
@@ -60,8 +59,6 @@ export enum PlayerType {
     PLAYER_1,
     PLAYER_2,
 }
-
-const LIFE_AWARD_GAP = 1000;
 
 @ccclass("GameMgr")
 export class GameMgr extends Component {
@@ -156,11 +153,14 @@ export class GameMgr extends Component {
     };
 
     private checkAddLife(info: { id: PlayerType, life: number; awardGap: number }, bounds: number) {
+        // console.log(info, bounds);
         if (info.awardGap - bounds < 0) {
             info.life++;
             info.awardGap = LIFE_AWARD_GAP - (bounds - info.awardGap);
             find('ref').getComponent(AudioMgr).effectPlay('get_double_laser');
             this.node.emit(GameMgr.EventType.PLAYER_LIFE_ADD, info.id)
+        } else {
+            info.awardGap -= bounds;
         }
     }
 
