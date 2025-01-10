@@ -12,6 +12,7 @@ import {
     instantiate,
     IPhysics2DContact,
     KeyCode,
+    math,
     Node,
     NodeEventType,
     Prefab,
@@ -26,9 +27,9 @@ import {
 import { Base } from "../common/Base";
 import { Stick, TOWARDS } from "./Stick";
 import { ContactGroup, GameMgr, PlayerType } from "../mgrs/GameMgr";
-import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 import { Fight } from "./Fight";
 import { Bullet } from "./Bullet";
+import { PLAYER_CONFIG, PLAYER_LEVEL } from "../game.conf";
 const { ccclass, property } = _decorator;
 
 export enum FACE_TO {
@@ -67,28 +68,51 @@ export class Player extends Base {
 
     #invincibling = true;
 
+    private level: PLAYER_LEVEL = PLAYER_LEVEL.ONE;
+
     protected onEnable(): void {
         this.#rgd = this.getComponent(RigidBody2D);
-        // console.log("PLAYER LOADED", this.#stick);
-        const sfs = this.game.getTankUi("tank_yellow_1");
-        const clip = this.animation.createAnimation(sfs);
-
         this.#body = this.node.getChildByName("body");
 
         this.#animation = this.#body.getComponent(Animation);
-        // this.#animation.playOnLoad = false;
-        this.#animation.defaultClip = clip;
-        //必须给个默认的皮肤
-        this.#body.getComponent(Sprite).spriteFrame = sfs.sfs[0];
+        this.updatePlayerTexture();
 
         this.#bullets = find("Canvas/game/Mask/bullets");
 
         this.getComponent(Collider2D).on(Contact2DType.BEGIN_CONTACT, this.onColliderHandle, this);
     }
 
+    get canBrokenStone() {
+        return this.level >= PLAYER_LEVEL.FOUR;
+    }
+
+    initGlobalLevel(lv: PLAYER_LEVEL) {
+        this.level = lv;
+        this.updatePlayerTexture();
+    }
+
+    upPlayerLevel(val = 1) {
+        this.level = math.clamp(this.level + val, PLAYER_LEVEL.ONE, PLAYER_LEVEL.FIVE);
+        this.game.asyncPlayerLevel(this.playerType, this.level);
+        this.updatePlayerTexture();
+    }
+
+    updatePlayerTexture() {
+        const sfs = this.game.getTankUi(PLAYER_CONFIG[this.level]);
+        const clip = this.animation.createAnimation(sfs);
+        this.#animation.defaultClip = clip;
+        //必须给个默认的皮肤
+        this.#body.getComponent(Sprite).spriteFrame = sfs.sfs[0];
+    }
+
     onColliderHandle(self: Collider2D, oth: Collider2D, pos: IPhysics2DContact) {
         if (oth.group === ContactGroup.ENEMY || oth.group === ContactGroup.ENEMY_BULLET) {
             if (this.#invincibling) {
+                return;
+            }
+
+            if (this.level > PLAYER_LEVEL.ONE) {
+                this.upPlayerLevel(-1);
                 return;
             }
 
@@ -178,7 +202,7 @@ export class Player extends Base {
             bullet.setPosition(this.node.position.clone());
             bullet.setRotationFromEuler(this.#body.eulerAngles);
             bullet.setParent(this.#bullets);
-            bullet.getComponent(Bullet).belongTo(this.playerType);
+            bullet.getComponent(Bullet).belongTo(this.playerType, this.canBrokenStone);
         }
     };
 

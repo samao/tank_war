@@ -9,6 +9,7 @@ import {
     input,
     instantiate,
     Node,
+    NodeEventType,
     Prefab,
     Size,
     Sprite,
@@ -124,6 +125,9 @@ export class eidtor extends Base {
         block.getComponent(UITransform).setContentSize(width, height);
         block.setPosition(pos.subtract2f(104, 104).add2f(4, 4).toVec3());
         block.setParent(find("Canvas/blocks"));
+        block.on(NodeEventType.MOUSE_DOWN, () => {
+            console.log('BLOCK:',id);
+        })
 
         return block;
     }

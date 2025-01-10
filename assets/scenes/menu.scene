@@ -184,7 +184,7 @@
     "_priority": 0,
     "_fov": 45,
     "_fovAxis": 0,
-    "_orthoHeight": 104,
+    "_orthoHeight": 103.99999999999999,
     "_near": 0,
     "_far": 2000,
     "_color": {
@@ -732,7 +732,7 @@
     ],
     "value": {
       "__type__": "cc.Size",
-      "width": 47.99446445919689,
+      "width": 47.98705018939393,
       "height": 20.16
     }
   },
@@ -752,7 +752,7 @@
     ],
     "value": {
       "__type__": "cc.Vec3",
-      "x": 16.002767770401555,
+      "x": 16.006474905303037,
       "y": 0,
       "z": 0
     }
@@ -773,7 +773,7 @@
     ],
     "value": {
       "__type__": "cc.Vec3",
-      "x": -34.49446445919689,
+      "x": -34.487050189393926,
       "y": 0,
       "z": 0
     }
@@ -953,7 +953,7 @@
     ],
     "value": {
       "__type__": "cc.Size",
-      "width": 47.99446445919689,
+      "width": 47.98705018939393,
       "height": 20.16
     }
   },
@@ -973,7 +973,7 @@
     ],
     "value": {
       "__type__": "cc.Vec3",
-      "x": 16.002767770401555,
+      "x": 16.006474905303037,
       "y": 0,
       "z": 0
     }
@@ -1251,7 +1251,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 300,
-      "height": 207.9999999999999
+      "height": 207.99999999999986
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -1670,7 +1670,7 @@
     "_enabled": true,
     "__prefab": null,
     "_lineHeight": 14,
-    "_string": "<color=#00ff00><size=15>游戏玩法</size></color>\n\n<color=#0fffff  >移动端:</color>\n<color=#ffffff>左半屏隐形摇杆控制方向。右下角按钮发射</color>\n\n<color=#0fffff  >PC端:</color>\n<color=#ffffff>玩家一：W(上)A(左)S(下)D(右) 控制方向，空格发射。\n玩家二：↑(上)↓(下)←(左)→(右)箭头控制方向，按键P发射</color>",
+    "_string": "<color=#00ff00><size=15>游戏玩法</size></color>\n\n<color=#0fffff  >移动端:</color>\n<color=#ffffff>左下角控制器控制方向。右下角按钮发射</color>\n\n<color=#0fffff  >PC端:</color>\n<color=#ffffff>玩家一：W(上)A(左)S(下)D(右) 控制方向，空格发射。\n玩家二：↑(上)↓(下)←(左)→(右)箭头控制方向，按键PAGE UP发射</color>",
     "_horizontalAlign": 0,
     "_verticalAlign": 0,
     "_fontSize": 7,
@@ -1784,7 +1784,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 8.002980286593264,
+      "width": 8.00174646859217,
       "height": 15.12
     },
     "_anchorPoint": {
@@ -1817,7 +1817,7 @@
     "_string": "X",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 33.40384615384615,
+    "_actualFontSize": 28.55769230769231,
     "_fontSize": 12,
     "_fontFamily": "Arial",
     "_lineHeight": 12,
@@ -1994,7 +1994,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 300,
-      "height": 207.9999999999999
+      "height": 207.99999999999986
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",

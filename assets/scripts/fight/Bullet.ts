@@ -15,6 +15,7 @@ export class Bullet extends Base {
 
     #cld: BoxCollider2D;
     #frozen = false;
+    #brokenStone = false;
 
     #owner: PlayerType;
 
@@ -25,8 +26,13 @@ export class Bullet extends Base {
         this.#cld.once(Contact2DType.BEGIN_CONTACT, this.#onCollider);
     }
 
-    belongTo(player: PlayerType) {
+    belongTo(player: PlayerType, brokenStone = false) {
         this.#owner = player;
+        this.#brokenStone = brokenStone;
+    }
+
+    get brokenStone() {
+        return this.#brokenStone;
     }
 
     owner() {

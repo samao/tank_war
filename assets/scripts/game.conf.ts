@@ -26,10 +26,27 @@ export const TankConfig: Tank[] = [
 ];
 
 // 每一关的敌方坦克数
-export const ENEMY_TOTAL_PER_LEVEL = 8;
+export const ENEMY_TOTAL_PER_LEVEL = 13;
 // 每个玩家的命
 export const PLAYER_LIFE_TOTAL = 8;
 // 总关数
 export const TOTAL_LEVELS = 36;
 // 奖励命的分数间隔
-export const LIFE_AWARD_GAP = 1000;
+export const LIFE_AWARD_GAP = 5500;
+
+export const BASE_BLOCK = [661, 635, 609, 610, 611, 612, 638, 664];
+
+export enum PLAYER_LEVEL {
+    ONE,
+    TWO,
+    THREE,
+    FOUR,
+    FIVE,
+}
+export const PLAYER_CONFIG = {
+    [PLAYER_LEVEL.ONE]: 'tank_yellow_1',
+    [PLAYER_LEVEL.TWO]: 'tank_yellow_2',
+    [PLAYER_LEVEL.THREE]: 'tank_yellow_3',
+    [PLAYER_LEVEL.FOUR]: 'tank_yellow_4',
+    [PLAYER_LEVEL.FIVE]: 'tank_yellow_5'
+}

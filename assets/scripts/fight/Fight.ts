@@ -20,6 +20,8 @@ export const SWAPN_POINTS = [
     new Vec3().add3f(SCREEN.x / 2 - BLOCK_SIZE.width, SCREEN.height / 2 - BLOCK_SIZE.height, 0),
 ];
 
+const SWAP_POINT = new Vec2(666, 659);
+
 @ccclass("Fight")
 export class Fight extends Base {
     #mainCamera: Camera;
@@ -79,16 +81,29 @@ export class Fight extends Base {
         });
 
         this.game.node.on(GameMgr.EventType.NEXT_STAGE, this.nextLevel);
+        this.game.node.on(GameMgr.EventType.IRON_BASE_WALL, this.baseChangeToStone);
+        this.game.node.on(GameMgr.EventType.PLAYER_POWERFUL, this.powerFullUp)
     }
 
-    protected onDestroy(): void {
-        console.log("FIGHT DES");
-        // this.#disConnectStick();
+    private powerFullUp = (player: PlayerType) => {
+        this.players.getChildByName(`player_${player}`).getComponent(Player).upPlayerLevel();
+    }
+
+    private baseChangeToStone = () => {
+        [661, 635, 609, 610, 611, 612, 638, 664].forEach(id => {
+            const baseBlock = this.behind.getChildByName(`wall_${id}`);
+            // console.log('方块', baseBlock);
+            if (baseBlock) {
+                baseBlock.getComponent(Block).stonezile();
+            }
+        })
     }
 
     protected onDisable(): void {
         console.log("FIGHT DISABLE");
         this.game.node.off(GameMgr.EventType.NEXT_STAGE, this.nextLevel);
+        this.game.node.off(GameMgr.EventType.IRON_BASE_WALL, this.baseChangeToStone)
+        this.game.node.off(GameMgr.EventType.PLAYER_POWERFUL, this.powerFullUp)
         this.#disConnectStick();
         this.unscheduleAllCallbacks();
     }
@@ -244,6 +259,7 @@ export class Fight extends Base {
         this.scheduleOnce(() => {
             const pos = this.blockIndexToPos(id !== 0 && this.game.getMode() === GameMode.DOUBLE ? SWAP_POINT.y : SWAP_POINT.x);
             const player = instantiate(this.playerPrefab);
+            player.name = 'player_' + id;
             player.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
             player.setParent(this.players);
             const p1stick = find(`Canvas/ui/sticks/player${id !== 0 && this.game.getMode() === GameMode.DOUBLE ? "2" : "1"}`);
@@ -251,6 +267,7 @@ export class Fight extends Base {
             p1stick.getComponent(Stick).hidenVirUI().setUserType(id);
             playerCMP.bindStick(p1stick, id);
             playerCMP.invincible(this.invincibleTime);
+            playerCMP.initGlobalLevel(this.game.getGlobalPlayerLevel(id));
             playerCMP.playerType = id !== 0 && this.game.getMode() === GameMode.DOUBLE ? PlayerType.PLAYER_2 : PlayerType.PLAYER_1;
             this.#playerSticks.set(playerCMP, p1stick);
         }, 1);
@@ -261,6 +278,7 @@ export class Fight extends Base {
 
         const pos = this.blockIndexToPos(SWAP_POINT.x);
         const player = instantiate(this.playerPrefab);
+        player.name = 'player_0'
         player.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
         player.setParent(this.players);
         const p1stick = find("Canvas/ui/sticks/player1");
@@ -268,27 +286,32 @@ export class Fight extends Base {
             .getComponent(Stick)
             .hidenVirUI(this.game.getMode() === GameMode.DOUBLE ? -90 : 0)
             .setUserType(PlayerType.PLAYER_1);
+
         const playerCMP = player.getComponent(Player);
         playerCMP.bindStick(p1stick, 0);
         playerCMP.invincible(this.invincibleTime);
+        playerCMP.initGlobalLevel(this.game.getGlobalPlayerLevel(PlayerType.PLAYER_1))
         playerCMP.playerType = PlayerType.PLAYER_1;
         this.#playerSticks.set(playerCMP, p1stick);
 
         if (this.game.getMode() === GameMode.DOUBLE) {
             const pos = this.blockIndexToPos(SWAP_POINT.y);
             const player2 = instantiate(this.playerPrefab);
+            player2.name = 'player_1'
             player2.setPosition(pos.toVec3().subtract(new Vec3(0, 4, 0)));
             player2.setParent(this.players);
             const p2stick = find("Canvas/ui/sticks/player2");
             p2stick.active = true;
             p2stick.getComponent(Stick).hidenVirUI(90).setUserType(PlayerType.PLAYER_2);
+            // console.log('stick2 id is', p2stick.uuid)
             const playerCMP = player2.getComponent(Player);
             playerCMP.bindStick(p2stick, 1);
             playerCMP.invincible(this.invincibleTime);
+            playerCMP.initGlobalLevel(this.game.getGlobalPlayerLevel(PlayerType.PLAYER_2))
             playerCMP.playerType = PlayerType.PLAYER_2;
             this.#playerSticks.set(playerCMP, p2stick);
+
+            console.log('玩家name:',player.name, player2.name)
         }
     }
 }
-
-const SWAP_POINT = new Vec2(666, 633);

@@ -22,6 +22,7 @@ import {
 } from "cc";
 import { Base } from "../common/Base";
 import { GameMgr, GameMode, PlayerType } from "../mgrs/GameMgr";
+import { FACE_TO } from "./Player";
 const { ccclass, property } = _decorator;
 
 @ccclass("CTR_KEY")
@@ -70,48 +71,52 @@ export class Stick extends Component {
     @property(Node)
     private fireBtn: Node;
 
-    @property({ type: Prefab, displayName: "控制器红点" })
-    private ctlCenter: Prefab;
+    #targetUser: PlayerType;
 
-    private ctlDot: Node;
-
-    #degressOffset = 0;
-
-    #targetUser: PlayerType = PlayerType.PLAYER_1;
-
-    private isTouching = false;
-
-    private touchID: any;
+    private hocker_idel: Node;
+    private hocker_right: Node;
 
     protected onLoad(): void {
         this.#areas.push(
-            ...["up", "down", "left", "right"].map((cpn) => {
-                return this.node.getChildByName(cpn);
-            })
+            this.node.getChildByPath("hocker/hocker-tap-right"),
+            this.node.getChildByPath("hocker/hocker-tap-top"),
+            this.node.getChildByPath("hocker/hocker-tap-left"),
+            this.node.getChildByPath("hocker/hocker-tap-down")
         );
+        this.hocker_idel = this.node.getChildByPath("hocker/hocker-idel");
+        this.hocker_right = this.node.getChildByPath("hocker/hocker-right");
+    }
 
-        this.ctlDot = instantiate(this.ctlCenter);
+    bindEvent(bind = true) {
+        this.#areas.forEach((node) => {
+            if (bind) {
+                node.on(NodeEventType.TOUCH_START, this.#onTouchStart);
+                node.on(NodeEventType.TOUCH_END, this.#onTouchEnd);
+                node.on(NodeEventType.TOUCH_CANCEL, this.#onTouchEnd);
+            } else {
+                node.off(NodeEventType.TOUCH_START, this.#onTouchStart);
+                node.off(NodeEventType.TOUCH_END, this.#onTouchEnd);
+                node.off(NodeEventType.TOUCH_CANCEL, this.#onTouchEnd);
+            }
+        });
     }
 
     hidenVirUI(degressOffset = 0) {
-        console.log("设备类型：", sys.isMobile);
-        this.#areas.forEach((n) => (n.active = false));
+        console.log("设备类型：", sys.isMobile, this.#areas.length);
         this.fireBtn.active = sys.isMobile;
-        this.#degressOffset = degressOffset;
+        this.node.getChildByName('hocker').active = sys.isMobile;
         return this;
     }
 
     setUserType(type: PlayerType) {
+        // console.log('stick player', type, this);
         this.#targetUser = type;
     }
 
     protected onEnable(): void {
         if (sys.isMobile) {
-            this.node.on(NodeEventType.TOUCH_START, this.onTouchStart);
-            this.node.on(NodeEventType.TOUCH_MOVE, this.onTouchMove);
-            this.node.on(NodeEventType.TOUCH_END, this.onTouchEnd);
-            this.node.on(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
             this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle);
+            this.bindEvent(true);
         } else {
             input.on(Input.EventType.KEY_DOWN, this.#onKeyDown);
             input.on(Input.EventType.KEY_UP, this.#onKeyDown);
@@ -119,93 +124,12 @@ export class Stick extends Component {
     }
 
     protected onDisable(): void {
-        this.node.off(NodeEventType.TOUCH_START, this.onTouchStart);
-        this.node.off(NodeEventType.TOUCH_MOVE, this.onTouchMove);
-        this.node.off(NodeEventType.TOUCH_END, this.onTouchEnd);
-        this.node.off(NodeEventType.TOUCH_CANCEL, this.onTouchEnd);
         this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle);
 
         input.off(Input.EventType.KEY_DOWN, this.#onKeyDown);
         input.off(Input.EventType.KEY_UP, this.#onKeyDown);
-    }
 
-    onTouchStart = (e: EventTouch) => {
-        console.log('onTouchStart', e.touch.getID(), this.touchID);
-        if(typeof this.touchID === 'undefined') {
-            this.isTouching = true;
-            this.ctlDot.parent = this.node;
-            this.ctlDot.setWorldPosition(this.getScreenPoint(e.touch.getLocation().toVec3()));
-            this.ctlDot.layer = this.#targetUser === PlayerType.PLAYER_1 ? 1 << 0 : 1 << 1;
-            this.touchID = e.touch.getID();
-        }
-    };
-
-    private getScreenPoint(pos: Vec3) {
-        let cam: Camera;
-        if (this.getGameMode() === GameMode.DOUBLE) {
-            cam = find(`Canvas/CameraPlayer${this.#targetUser === PlayerType.PLAYER_1 ? "1" : "2"}`).getComponent(Camera);
-        } else {
-            cam = find(`Canvas/Camera`).getComponent(Camera);
-        }
-        // console.log('cam is', cam);
-        return cam.screenToWorld(pos);
-    }
-
-    private getGameMode() {
-        return find("ref").getComponent(GameMgr).getMode();
-    }
-
-    onTouchMove = (e: EventTouch) => {
-        if (this.isTouching && e.touch.getID() === this.touchID) {
-            const dir = e.touch.getLocation().subtract(e.getStartLocation()).normalize();
-            const degress = (dir.y > 0 ? 1 : -1) * misc.radiansToDegrees(dir.angle(Vec2.UNIT_X)) - this.#degressOffset;
-            this.ctlDot.setRotationFromEuler(new Vec3(0, 0, degress));
-            if (degress > -135 && degress <= -45) {
-                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.DOWN);
-            } else if (degress > -45 && degress <= 45) {
-                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.RIGHT);
-            } else if (degress > 45 && degress <= 135) {
-                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.UP);
-            } else {
-                this.node.emit(Stick.EventType.TOUCHING, TOWARDS.LEFT);
-            }
-        }
-    };
-
-    onTouchEnd = (e: EventTouch) => {
-        console.log('onTouchEnd', e.touch.getID())
-        if (this.touchID === e.touch.getID()) {
-            console.log('取消')
-            this.isTouching = false;
-            this.touchID = undefined;
-            this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
-            this.ctlDot.parent = null;
-        }
-    };
-
-    protected onEnable_bk(): void {
-        this.#areas.forEach((node) => {
-            node.on(Input.EventType.TOUCH_START, this.#onTouchStart);
-            node.on(Input.EventType.TOUCH_END, this.#onTouchEnd);
-            node.on(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
-        });
-        this.fireBtn.on(NodeEventType.TOUCH_START, this.#fireHandle);
-    }
-
-    protected onDisable_BK(): void {
-        this.#areas.forEach((node) => {
-            node.off(Input.EventType.TOUCH_START, this.#onTouchStart);
-            node.off(Input.EventType.TOUCH_END, this.#onTouchEnd);
-            node.off(Input.EventType.TOUCH_CANCEL, this.#onTouchCancel);
-        });
-        this.fireBtn.off(NodeEventType.TOUCH_START, this.#fireHandle);
-
-        input.off(Input.EventType.KEY_DOWN, this.#onKeyDown);
-        input.off(Input.EventType.KEY_UP, this.#onKeyDown);
-    }
-
-    protected start(): void {
-        console.log("onEnabled", this.node.active);
+        this.bindEvent(false);
     }
 
     #fireHandle = (e: EventTouch) => {
@@ -239,20 +163,24 @@ export class Stick extends Component {
     };
 
     #onTouchStart = (e: EventTouch) => {
-        const map = {
-            up: TOWARDS.UP,
-            down: TOWARDS.DOWN,
-            left: TOWARDS.LEFT,
-            right: TOWARDS.RIGHT,
+        const map: Record<string, { to: TOWARDS; angle: number }> = {
+            top: { to: TOWARDS.UP, angle: 90 },
+            down: { to: TOWARDS.DOWN, angle: -90 },
+            left: { to: TOWARDS.LEFT, angle: 180 },
+            right: { to: TOWARDS.RIGHT, angle: 0 },
         };
-        this.node.emit(Stick.EventType.TOUCHING, map[e.currentTarget.name]);
+        const dirname = e.currentTarget.name.replace(/.+-/, "");
+        const { to: dir, angle } = map[dirname];
+        this.hocker_right.setRotationFromEuler(new Vec3(0, 0, angle));
+        this.node.emit(Stick.EventType.TOUCHING, dir);
+        this.hocker_idel.active = false;
+        this.hocker_right.active = true;
+        console.log('stick turn', this.#targetUser, dir);
     };
 
     #onTouchEnd = (e: EventTouch) => {
-        this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
-    };
-
-    #onTouchCancel = (e: EventTouch) => {
+        this.hocker_idel.active = true;
+        this.hocker_right.active = false;
         this.node.emit(Stick.EventType.TOUCHING, TOWARDS.CANCEL);
     };
 }

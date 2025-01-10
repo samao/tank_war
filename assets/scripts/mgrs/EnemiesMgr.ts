@@ -4,6 +4,7 @@ import { GameMgr } from "./GameMgr";
 import { Enemy } from "../fight/Enemy";
 // import { TOWARDS } from "../fight/Stick";
 import { MovieClip } from "../common/MovieClip";
+import { Bonus } from "../fight/Bonus";
 const { ccclass, property } = _decorator;
 
 const loop = [0, 1, 2];
@@ -22,10 +23,8 @@ export class EnemiesMgr extends Component {
     @property(Node)
     private bomblayer: Node;
 
-    // #animate: AnimationMgr;
-    // #animation: Animation;
     #game: GameMgr;
-    // #body: Node;
+    private bonus: Bonus;
 
     #swaps: Node[];
     #positions: Vec3[];
@@ -33,10 +32,25 @@ export class EnemiesMgr extends Component {
     protected onLoad(): void {
         // this.#animate = find("ref").getComponent(AnimationMgr);
         this.#game = find("ref").getComponent(GameMgr);
+        this.bonus = find("Canvas/game/Mask/bonus").getComponent(Bonus);
+        // console.log('ENMGR', this.#game.node);
+        this.#game.node.on(GameMgr.EventType.FROZEN_ALL_ENEMY, this.frozenEnemy);
     }
 
+    private frozenEnemy = () => {
+        this._frozenHandle(true);
+        this.scheduleOnce(this._frozenHandle.bind(null, false), 8);
+    };
+
+    private _frozenHandle = (isFrozen: boolean) => {
+        // console.log('frozen', isFrozen)
+        for (let enemy of this.enemiesLayer.children) {
+            enemy.getComponent(Enemy).bonusFrozen = isFrozen;
+        }
+    };
+
     setupSwap(swaps: Node[], positions: Vec3[]) {
-        console.log(swaps);
+        this.unschedule(this._frozenHandle);
         this.unscheduleAllCallbacks();
         this.destroyAll();
 
@@ -47,6 +61,8 @@ export class EnemiesMgr extends Component {
     }
 
     protected onDisable(): void {
+        this.#game.node.off(GameMgr.EventType.FROZEN_ALL_ENEMY, this.frozenEnemy);
+        this.unschedule(this._frozenHandle);
         this.unschedule(this._interCreate);
         this.unschedule(this.#generateOneAtSwap);
         this.destroyAll();
@@ -60,17 +76,21 @@ export class EnemiesMgr extends Component {
     };
 
     _interCreate = (swap: Node, position: Vec3, id: number) => {
-        swap.active = false;
-        this.#game.reduceWaitCount();
-        this.#game.dump();
-        const enemy = instantiate(this.enemyPrefab);
-        enemy.setPosition(position);
-        enemy.setParent(this.enemiesLayer);
+        if (this.#game.enemyWaitCount() > 0) {
+            swap.active = false;
+            this.#game.reduceWaitCount();
+            this.#game.dump();
+            const enemy = instantiate(this.enemyPrefab);
+            enemy.setPosition(position);
+            enemy.setParent(this.enemiesLayer);
 
-        enemy
-            .getComponent(Enemy)
-            // .toward(TOWARDS.DOWN)
-            .setSwapID(id);
+            enemy
+                .getComponent(Enemy)
+                // .toward(TOWARDS.DOWN)
+                .setSwapID(id);
+        } else {
+            swap.active = false;
+        }
     };
 
     destroyAtPos = (pos: Vec3, id: number) => {
@@ -83,8 +103,8 @@ export class EnemiesMgr extends Component {
             bomb.destroy();
         }, 0.5);
 
-        // console.log(this.#game.enemyWaitCount(), this.enemiesLayer.children.length);
         if (this.#game.enemyWaitCount() > 0) {
+            this.bonus.createBonus();
             this.scheduleOnce(this.#generateOneAtSwap.bind(this, this.#swaps[id], this.#positions[id], id), 2.5);
         }
     };
@@ -103,5 +123,6 @@ export class EnemiesMgr extends Component {
         // console.log('吹灰')
         this.bomblayer.removeAllChildren();
         this.enemiesLayer.removeAllChildren();
+        this.bonus.removeAll();
     }
 }

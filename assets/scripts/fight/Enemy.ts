@@ -20,7 +20,7 @@ import { TOWARDS } from "./Stick";
 import { FACE_TO } from "./Player";
 import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 import { ContactGroup, GameMgr, PlayerType } from "../mgrs/GameMgr";
-import { Tank, TankConfig } from "../game.conf"
+import { Tank, TankConfig } from "../game.conf";
 import { Bullet } from "./Bullet";
 const { ccclass, property } = _decorator;
 
@@ -48,9 +48,11 @@ export class Enemy extends Base {
     #lostHealth: number = 0;
 
     #idelTime = 0;
-        
+
     #areaInPreSecond: Vec3 = new Vec3();
     #distance = 0;
+
+    #bonusFrozen = false;
 
     protected onLoad(): void {
         super.onLoad();
@@ -73,6 +75,12 @@ export class Enemy extends Base {
 
         this.#rgd = this.getComponent(RigidBody2D);
         this.#bullets = find("Canvas/game/Mask/bullets");
+
+        this.game.node.once(GameMgr.EventType.BOMB_ALL_ENEMY, this.bombed);
+    }
+
+    set bonusFrozen(val: boolean) {
+        this.#bonusFrozen = val;
     }
 
     getBounds() {
@@ -97,12 +105,12 @@ export class Enemy extends Base {
         this.#frozen = true;
         this.#walkAnimate.pause();
         this.#cld.off(Contact2DType.BEGIN_CONTACT, this.onColliderHandle);
+        this.game.node.off(GameMgr.EventType.BOMB_ALL_ENEMY, this.bombed);
     }
 
     onColliderHandle = (self: Collider2D, oth: Collider2D, ct: IPhysics2DContact) => {
         if (oth.group === ContactGroup.BULLET || oth.group === ContactGroup.PLAYER) {
             if (++this.#lostHealth >= this.#tankConfig.life) {
-
                 this.#cld.off(Contact2DType.BEGIN_CONTACT, this.onColliderHandle);
 
                 this.#frozen = true;
@@ -110,9 +118,9 @@ export class Enemy extends Base {
                 ct.disabled = true;
 
                 if (oth.group === ContactGroup.BULLET) {
-                    // 子弹得携带信息  
-                    // console.log('碰你鸭子') 
-                    this.game.addPlayerScore(oth.node.parent.getComponent(Bullet).owner(), this.#tankConfig.bounds)
+                    // 子弹得携带信息
+                    // console.log('碰你鸭子')
+                    this.game.addPlayerScore(oth.node.parent.getComponent(Bullet).owner(), this.#tankConfig.bounds);
                     this.game.enemyDie();
                 } else {
                     this.game.addWaitCount();
@@ -124,12 +132,23 @@ export class Enemy extends Base {
                     this.node.destroy();
                 });
             } else {
-                this.audio.effectPlay('enemy', 0.2);
+                this.audio.effectPlay("enemy", 0.2);
             }
         } else {
-            this.turnDifferWay()
+            this.turnDifferWay();
         }
     };
+
+    bombed = (player: PlayerType) => {
+        this.game.addPlayerScore(player, this.#tankConfig.bounds);
+        this.game.enemyDie();
+        this.#mgr.destroyAtPos(this.node.worldPosition.clone(), this.#swapID);
+        this.#cld.off(Contact2DType.BEGIN_CONTACT, this.onColliderHandle);
+
+        this.scheduleOnce(() => {
+            this.node.destroy();
+        });
+    }
 
     turnDifferWay() {
         this.#frozen = true;
@@ -169,21 +188,26 @@ export class Enemy extends Base {
     }
 
     protected update(dt: number): void {
-        // console.log('单吗', this.#frozen)
+        if (this.#bonusFrozen) {
+            this.#rgd.linearVelocity = new Vec2();
+            return;
+        }
         if (!this.#frozen) {
             this.#rgd.linearVelocity = towardsToVelocity(this.#direct)
                 .multiplyScalar(this.#tankConfig.speed * dt)
                 .toVec2();
             this.currentTime += dt;
 
-            if (this.#tankConfig.attack && this.currentTime >= this.#tankConfig.shootGap) {
+            // 关数高了后坦克发子弹会加速 2.5% / 关 
+            const addition = math.clamp(Math.pow(0.975, this.game.getGameLevel() - 1), 0.4, 1);
+            if (this.#tankConfig.attack && this.currentTime >= this.#tankConfig.shootGap * addition) {
                 this.currentTime = 0;
                 this.#shoot();
             }
         }
-        
+
         if (this.#areaInPreSecond.equals(Vec3.ZERO)) {
-            this.node.getWorldPosition(this.#areaInPreSecond)
+            this.node.getWorldPosition(this.#areaInPreSecond);
         } else {
             this.#idelTime += dt;
             if (this.#idelTime > 2) {
@@ -197,9 +221,9 @@ export class Enemy extends Base {
                     this.turnDifferWay();
                 }
             } else {
-                Vec3.subtract(this.#areaInPreSecond, this.node.worldPosition, this.#areaInPreSecond)
+                Vec3.subtract(this.#areaInPreSecond, this.node.worldPosition, this.#areaInPreSecond);
                 this.#distance += Math.abs(this.#areaInPreSecond.x) + Math.abs(this.#areaInPreSecond.y);
-                this.node.getWorldPosition(this.#areaInPreSecond)
+                this.node.getWorldPosition(this.#areaInPreSecond);
                 // console.log('家就玩了', this.#distance)
             }
         }
