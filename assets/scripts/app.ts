@@ -1,8 +1,9 @@
-import { _decorator, Component, director, find, Node } from 'cc';
+import { _decorator, Component, director, find, Node, sys } from 'cc';
 import { AudioMgr } from './mgrs/AudioMgr';
 import { GameMgr } from './mgrs/GameMgr';
 import { AnimationMgr } from './mgrs/AnimationMgr';
 import { setup } from './mgrs/toast';
+import { init } from '../../extensions/i18n/assets/LanguageData';
 const { ccclass, property } = _decorator;
 
 @ccclass('app')
@@ -21,6 +22,8 @@ export class app extends Component {
             setup(node);
 
             console.log('APP Mount')
+
+            init(sys.language);
         }
     }
 

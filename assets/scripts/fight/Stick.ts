@@ -102,9 +102,11 @@ export class Stick extends Component {
     }
 
     hidenVirUI(degressOffset = 0) {
-        console.log("设备类型：", sys.isMobile, this.#areas.length);
-        this.fireBtn.active = sys.isMobile;
-        this.node.getChildByName('hocker').active = sys.isMobile;
+        const show = sys.isMobile || (sys.platform === sys.Platform.WECHAT_MINI_PROGRAM)
+        this.fireBtn.active = show;
+        this.node.getChildByName('hocker').active = show;
+        sys.dump();
+        console.log("设备类型：", show, this.#areas.length);
         return this;
     }
 

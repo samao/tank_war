@@ -20,8 +20,8 @@
         "imageUuidOrDatabaseUri": "079fd6d6-5243-4970-9308-02673496f392",
         "isUuid": true,
         "visible": false,
-        "minfilter": "linear",
-        "magfilter": "linear",
+        "minfilter": "nearest",
+        "magfilter": "nearest",
         "mipfilter": "none",
         "anisotropy": 0
       },

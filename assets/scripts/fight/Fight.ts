@@ -6,7 +6,7 @@ import { Player } from "./Player";
 import { MovieClip } from "../common/MovieClip";
 import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 import { Stick } from "./Stick";
-import { TOTAL_LEVELS } from "../game.conf";
+import { BASE_BLOCK, TOTAL_LEVELS } from "../game.conf";
 const { ccclass, property } = _decorator;
 
 const SCREEN = new Size(208, 208);
@@ -83,6 +83,11 @@ export class Fight extends Base {
         this.game.node.on(GameMgr.EventType.NEXT_STAGE, this.nextLevel);
         this.game.node.on(GameMgr.EventType.IRON_BASE_WALL, this.baseChangeToStone);
         this.game.node.on(GameMgr.EventType.PLAYER_POWERFUL, this.powerFullUp)
+        this.game.node.on(GameMgr.EventType.PLAYER_INVINCIBLE, this.invinciblePlayer);
+    }
+
+    private invinciblePlayer = (player: PlayerType) => {
+        this.players.getChildByName(`player_${player}`).getComponent(Player).invincible(8);
     }
 
     private powerFullUp = (player: PlayerType) => {
@@ -90,7 +95,7 @@ export class Fight extends Base {
     }
 
     private baseChangeToStone = () => {
-        [661, 635, 609, 610, 611, 612, 638, 664].forEach(id => {
+        BASE_BLOCK.forEach(id => {
             const baseBlock = this.behind.getChildByName(`wall_${id}`);
             // console.log('方块', baseBlock);
             if (baseBlock) {
@@ -100,10 +105,11 @@ export class Fight extends Base {
     }
 
     protected onDisable(): void {
-        console.log("FIGHT DISABLE");
+        // console.log("FIGHT DISABLE");
         this.game.node.off(GameMgr.EventType.NEXT_STAGE, this.nextLevel);
         this.game.node.off(GameMgr.EventType.IRON_BASE_WALL, this.baseChangeToStone)
         this.game.node.off(GameMgr.EventType.PLAYER_POWERFUL, this.powerFullUp)
+        this.game.node.off(GameMgr.EventType.PLAYER_INVINCIBLE, this.invinciblePlayer);
         this.#disConnectStick();
         this.unscheduleAllCallbacks();
     }

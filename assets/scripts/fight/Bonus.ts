@@ -25,7 +25,9 @@ export class Bonus extends Base {
     }
 
     createBonus() {
-        if (math.randomRange(0, 10) >= 10 - this.rate) {
+        const rnd = math.randomRange(0, 10);
+        console.log("随机率", rnd);
+        if (rnd >= 10 - this.rate) {
             //20% 生成奖励
             console.log("生成一个奖励道具");
             const x = math.randomRange(rect.xMin, rect.xMax);
@@ -35,38 +37,38 @@ export class Bonus extends Base {
             const bonusNode = instantiate(this.bonusPrefab);
             bonusNode.getComponent(Sprite).spriteFrame = this.game.getBonusTexture(type);
             bonusNode.getComponent(Data).data = type;
-            bonusNode.setPosition(x, y)
+            bonusNode.setPosition(x, y);
             this.bindCollider(bonusNode.getComponent(Collider2D));
-            this.scheduleOnce(this.appendChild.bind(this, bonusNode))
+            this.scheduleOnce(this.appendChild.bind(this, bonusNode));
             this.boundsMap.set(bonusNode, sys.now());
         }
     }
 
     private appendChild = (node: Node) => {
         node.setParent(this.node);
-    }
+    };
 
     private removeChild = (node: Node) => {
         this.boundsMap.delete(node);
         node.removeFromParent();
-    }
+    };
 
     private bindCollider(cld: Collider2D) {
         const removeBonus = (self: Collider2D, oth: Collider2D) => {
-            const player = oth.node.getComponent(Player).playerType
+            const player = oth.node.getComponent(Player).playerType;
             // console.log('被', player, '吃掉了', self.node.getComponent(Data<BONUS>).data);
-            const bonusType = self.node.getComponent(Data<BONUS>).data
-            this.handleBonusEvent(player, bonusType)
+            const bonusType = self.node.getComponent(Data<BONUS>).data;
+            this.handleBonusEvent(player, bonusType);
             cld.off(Contact2DType.BEGIN_CONTACT, removeBonus);
-            this.scheduleOnce(this.removeChild.bind(this, self.node))
-        }
-        cld.on(Contact2DType.BEGIN_CONTACT, removeBonus)
+            this.scheduleOnce(this.removeChild.bind(this, self.node));
+        };
+        cld.on(Contact2DType.BEGIN_CONTACT, removeBonus);
     }
 
     handleBonusEvent(player: PlayerType, bonusType: BONUS) {
         // bonusType = BONUS.POWERFUL;
-        console.log('处理事件', player, bonusType);
-        switch(bonusType) {
+        console.log("处理事件", player, bonusType);
+        switch (bonusType) {
             case BONUS.LIFE:
                 this.game.directlyAddLife(player, 1);
                 break;
@@ -78,10 +80,13 @@ export class Bonus extends Base {
                 break;
             case BONUS.BASE_IRON:
                 // console.log('基地变铁')
-                this.game.node.emit(GameMgr.EventType.IRON_BASE_WALL)
+                this.game.node.emit(GameMgr.EventType.IRON_BASE_WALL);
                 break;
             case BONUS.POWERFUL:
                 this.game.node.emit(GameMgr.EventType.PLAYER_POWERFUL, player);
+                break;
+            case BONUS.INVINCIBLE:
+                this.game.node.emit(GameMgr.EventType.PLAYER_INVINCIBLE, player);
                 break;
         }
     }
@@ -89,7 +94,7 @@ export class Bonus extends Base {
     protected update(dt: number): void {
         for (let [node, createTime] of this.boundsMap) {
             if (sys.now() - createTime > 8 * 1000) {
-                this.boundsMap.delete(node)
+                this.boundsMap.delete(node);
                 node.removeFromParent();
             }
         }

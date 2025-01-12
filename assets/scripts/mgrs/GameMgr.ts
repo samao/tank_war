@@ -40,6 +40,7 @@ export enum BONUS {
     BOMB_ALL,
     FROZEN_ALL,
     POWERFUL,
+    INVINCIBLE,
     LIFE,
 }
 
@@ -49,6 +50,7 @@ export const BonusTexture = {
     [BONUS.FROZEN_ALL]: "frozen-all",
     [BONUS.POWERFUL]: "strong-power",
     [BONUS.LIFE]: "tank-life",
+    [BONUS.INVINCIBLE]: 'invincible'
 };
 
 export enum ContactGroup {
@@ -92,6 +94,7 @@ export class GameMgr extends Component {
         IRON_BASE_WALL: "ironBaseWall",
         FROZEN_ALL_ENEMY: "frozenAllEnemy",
         PLAYER_POWERFUL: "playerPowerful",
+        PLAYER_INVINCIBLE: 'playerInvincible'
     };
 
     #mode: GameMode = GameMode.SINGLE;

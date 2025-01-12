@@ -2,6 +2,7 @@ import { _decorator, Component, find, Label, Node, Sprite, SpriteFrame, UITransf
 import { Base } from "../common/Base";
 import { GameMgr, GameMode, PlayerType } from "../mgrs/GameMgr";
 import { ENEMY_TOTAL_PER_LEVEL, PLAYER_LIFE_TOTAL } from "../game.conf";
+import { t } from 'db://i18n/LanguageData';
 const { ccclass, property } = _decorator;
 
 @ccclass("tank_tag")
@@ -65,6 +66,7 @@ export class ui_controler extends Base {
     }
 
     private resetAll = () => {
+        this.stageLabel.string = `${t('fight.lv')}: 1`;
         this.playerScore = this.player2Score = 0;
         this.enemyCount = ENEMY_TOTAL_PER_LEVEL;
         this.player2life = this.playerlife = PLAYER_LIFE_TOTAL;
@@ -91,15 +93,15 @@ export class ui_controler extends Base {
     private addScore = ({ id, score: pt }: { id: number, score: number }) => {
         if (id === 0) {
             this.playerScore += pt;
-            this.playerinfo_1.score.string = "积分: " + this.playerScore;
+            this.playerinfo_1.score.string = `${t('fight.score')}:${this.playerScore}`;
         } else {
             this.player2Score += pt;
-            this.playerinfo_2.score.string = "积分: " + this.player2Score;
+            this.playerinfo_2.score.string = `${t('fight.score')}:${this.player2Score}`;
         }
     };
 
     private changeLevel = (lv: number) => {
-        this.stageLabel.string = "关: " + lv;
+        this.stageLabel.string = `${t('fight.lv')}: ${lv}`;
         this.enemyCount = ENEMY_TOTAL_PER_LEVEL;
         this.createEnemyTags();
     };
@@ -137,7 +139,7 @@ export class ui_controler extends Base {
     private onUpdateGameInfo = () => {
        this.createEnemyTags();
 
-        this.playerinfo_1.score.string = "积分: " + this.playerScore;
+        this.playerinfo_1.score.string = `${t('fight.score')}:${this.playerScore}`;
 
         for (let i = 0; i < this.playerlife; i++) {
             const node = new Node("player1_" + i);
@@ -148,7 +150,7 @@ export class ui_controler extends Base {
 
         find('Canvas/ui/player-info/p2info').active = this.game.getMode() === GameMode.DOUBLE;
 
-        this.playerinfo_2.score.string = "积分: " + this.player2Score;
+        this.playerinfo_2.score.string = `${t('fight.score')}:${this.player2Score}`;
 
         for (let i = 0; i < this.player2life; i++) {
             const node = new Node("player2_" + i);
