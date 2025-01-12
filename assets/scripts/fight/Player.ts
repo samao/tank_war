@@ -27,7 +27,7 @@ import {
 import { Base } from "../common/Base";
 import { Stick, TOWARDS } from "./Stick";
 import { ContactGroup, GameMgr, PlayerType } from "../mgrs/GameMgr";
-import { Fight } from "./Fight";
+// import { Fight } from "./Fight";
 import { Bullet } from "./Bullet";
 import { PLAYER_CONFIG, PLAYER_LEVEL } from "../game.conf";
 const { ccclass, property } = _decorator;
@@ -124,7 +124,8 @@ export class Player extends Base {
             this.game.discountLife(this.playerType)
             this.#direction.set(0, 0);
             
-            find("Canvas").getComponent(Fight)?.destroyAtPos(this.node.worldPosition, this.#playerID);
+            this.game.node.emit(GameMgr.EventType.DESTROY_PLAYER_AT_POINT, this.node.worldPosition, this.#playerID)
+            // find("Canvas").getComponent(Fight)?.destroyAtPos(this.node.worldPosition, this.#playerID);
 
             this.unBindStick();
             this.scheduleOnce(() => {

@@ -22,7 +22,7 @@ import { Block } from "../fight/Block";
 import { BLOCK, BlockTexture } from "../mgrs/GameMgr";
 const { ccclass, property } = _decorator;
 
-import { Astar } from "../common/Util";
+// import { Astar } from "../common/Util";
 
 @ccclass("eidtor")
 export class eidtor extends Base {
@@ -37,7 +37,7 @@ export class eidtor extends Base {
         console.log("初始化数据");
         /** node 对应的小块行列 */
         const min_block_map: Map<Node, [number, number]> = new Map();
-        const pfGrid = new Astar.Grid(26, 26);
+        // const pfGrid = new Astar.Grid(26, 26);
 
         this.game.loadAllBlockTexture(() => {
             for (let col = 0; col < 26; col++) {
@@ -48,7 +48,7 @@ export class eidtor extends Base {
 
                     min_block_map.set(node, [col, row]);
 
-                    pfGrid.setWalkableAt(col, row, [BLOCK.None, BLOCK.Forest].indexOf(mapData[index] as BLOCK) !== -1 ? true : false);
+                    // pfGrid.setWalkableAt(col, row, [BLOCK.None, BLOCK.Forest].indexOf(mapData[index] as BLOCK) !== -1 ? true : false);
                 }
             }
 
@@ -82,29 +82,29 @@ export class eidtor extends Base {
                     const { target } = e;
 
                     if (target) {
-                        const nd: Node = target;
-                        const bt = nd.getComponent(Block);
-                        if (bt) {
-                            if (!startNode) {
-                                this.clearPath();
-                                startNode = this.#align(min_block_map.get(nd));
-                                nd.getComponent(Sprite).grayscale = true;
-                            } else if (!endNode) {
-                                endNode = this.#align(min_block_map.get(nd));
-                                nd.getComponent(Sprite).grayscale = true;
-                                console.log(startNode, endNode);
-                                var finder = new Astar.AStarFinder();
-                                var path = finder.findPath(startNode[1], startNode[0], endNode[1], endNode[0], bigGrid.clone());
+                        // const nd: Node = target;
+                        // const bt = nd.getComponent(Block);
+                        // if (bt) {
+                        //     if (!startNode) {
+                        //         this.clearPath();
+                        //         startNode = this.#align(min_block_map.get(nd));
+                        //         nd.getComponent(Sprite).grayscale = true;
+                        //     } else if (!endNode) {
+                        //         endNode = this.#align(min_block_map.get(nd));
+                        //         nd.getComponent(Sprite).grayscale = true;
+                        //         console.log(startNode, endNode);
+                        //         // var finder = new Astar.AStarFinder();
+                        //         // var path = finder.findPath(startNode[1], startNode[0], endNode[1], endNode[0], bigGrid.clone());
 
-                                startNode = endNode = null;
-                                if (!path || path.length === 0) {
-                                    console.log("找不到路");
-                                    this.clearPath();
-                                    return;
-                                }
-                                this.#drawPath(path);
-                            }
-                        }
+                        //         startNode = endNode = null;
+                        //         if (!path || path.length === 0) {
+                        //             console.log("找不到路");
+                        //             this.clearPath();
+                        //             return;
+                        //         }
+                        //         this.#drawPath(path);
+                        //     }
+                        // }
                     }
                 },
                 false

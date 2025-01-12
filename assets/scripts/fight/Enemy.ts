@@ -18,7 +18,6 @@ import {
 import { Base } from "../common/Base";
 import { TOWARDS } from "./Stick";
 import { FACE_TO } from "./Player";
-import { EnemiesMgr } from "../mgrs/EnemiesMgr";
 import { ContactGroup, GameMgr, PlayerType } from "../mgrs/GameMgr";
 import { Tank, TankConfig } from "../game.conf";
 import { Bullet } from "./Bullet";
@@ -30,7 +29,6 @@ export class Enemy extends Base {
 
     #walkAnimate: Animation;
     #frozen = false;
-    #mgr: EnemiesMgr;
     #swapID: number;
     #cld: Collider2D;
     #rgd: RigidBody2D;
@@ -56,7 +54,6 @@ export class Enemy extends Base {
 
     protected onLoad(): void {
         super.onLoad();
-        this.#mgr = find("Canvas").getComponent(EnemiesMgr);
         this.#body = this.node.getChildByName("body");
 
         this.#tankConfig = this.randomTankMode();
@@ -126,7 +123,7 @@ export class Enemy extends Base {
                     this.game.addWaitCount();
                 }
 
-                this.#mgr.destroyAtPos(this.node.worldPosition.clone(), this.#swapID);
+                this.game.node.emit(GameMgr.EventType.DESTROY_ENEMY_AT_POINT, this.node.worldPosition.clone(), this.#swapID)
 
                 this.scheduleOnce(() => {
                     this.node.destroy();
@@ -142,7 +139,8 @@ export class Enemy extends Base {
     bombed = (player: PlayerType) => {
         this.game.addPlayerScore(player, this.#tankConfig.bounds);
         this.game.enemyDie();
-        this.#mgr.destroyAtPos(this.node.worldPosition.clone(), this.#swapID);
+        this.game.node.emit(GameMgr.EventType.DESTROY_ENEMY_AT_POINT, this.node.worldPosition.clone(), this.#swapID)
+
         this.#cld.off(Contact2DType.BEGIN_CONTACT, this.onColliderHandle);
 
         this.scheduleOnce(() => {

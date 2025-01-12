@@ -94,7 +94,9 @@ export class GameMgr extends Component {
         IRON_BASE_WALL: "ironBaseWall",
         FROZEN_ALL_ENEMY: "frozenAllEnemy",
         PLAYER_POWERFUL: "playerPowerful",
-        PLAYER_INVINCIBLE: 'playerInvincible'
+        PLAYER_INVINCIBLE: 'playerInvincible',
+        DESTROY_PLAYER_AT_POINT: 'destroyPlayerAtPoint',
+        DESTROY_ENEMY_AT_POINT: 'destroyEnemyAtPoint'
     };
 
     #mode: GameMode = GameMode.SINGLE;

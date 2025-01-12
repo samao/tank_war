@@ -35,6 +35,7 @@ export class EnemiesMgr extends Component {
         this.bonus = find("Canvas/game/Mask/bonus").getComponent(Bonus);
         // console.log('ENMGR', this.#game.node);
         this.#game.node.on(GameMgr.EventType.FROZEN_ALL_ENEMY, this.frozenEnemy);
+        this.#game.node.on(GameMgr.EventType.DESTROY_ENEMY_AT_POINT, this.destroyAtPos)
     }
 
     private frozenEnemy = () => {
@@ -62,6 +63,7 @@ export class EnemiesMgr extends Component {
 
     protected onDisable(): void {
         this.#game.node.off(GameMgr.EventType.FROZEN_ALL_ENEMY, this.frozenEnemy);
+        this.#game.node.off(GameMgr.EventType.DESTROY_ENEMY_AT_POINT, this.destroyAtPos)
         this.unschedule(this._frozenHandle);
         this.unschedule(this._interCreate);
         this.unschedule(this.#generateOneAtSwap);

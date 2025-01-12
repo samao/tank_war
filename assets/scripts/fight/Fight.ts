@@ -84,6 +84,7 @@ export class Fight extends Base {
         this.game.node.on(GameMgr.EventType.IRON_BASE_WALL, this.baseChangeToStone);
         this.game.node.on(GameMgr.EventType.PLAYER_POWERFUL, this.powerFullUp)
         this.game.node.on(GameMgr.EventType.PLAYER_INVINCIBLE, this.invinciblePlayer);
+        this.game.node.on(GameMgr.EventType.DESTROY_PLAYER_AT_POINT, this.destroyAtPos)
     }
 
     private invinciblePlayer = (player: PlayerType) => {
@@ -110,6 +111,7 @@ export class Fight extends Base {
         this.game.node.off(GameMgr.EventType.IRON_BASE_WALL, this.baseChangeToStone)
         this.game.node.off(GameMgr.EventType.PLAYER_POWERFUL, this.powerFullUp)
         this.game.node.off(GameMgr.EventType.PLAYER_INVINCIBLE, this.invinciblePlayer);
+        this.game.node.off(GameMgr.EventType.DESTROY_PLAYER_AT_POINT, this.destroyAtPos)
         this.#disConnectStick();
         this.unscheduleAllCallbacks();
     }
