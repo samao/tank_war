@@ -1,5 +1,5 @@
 // @ts-nocheck
 
-declare module 'pathfinding';
+// declare module 'pathfinding';
 
-export { default as Astar } from "pathfinding";
+// export { default as Astar } from "pathfinding";
