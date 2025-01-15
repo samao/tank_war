@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, find, director, ToggleContainer, Toggle, RichText } from "cc";
+import { _decorator, Component, Node, find, director, ToggleContainer, Toggle, RichText, tween, Vec3 } from "cc";
 import { Base } from "../common/Base";
 import { t } from 'db://i18n/LanguageData';
 const { ccclass, property } = _decorator;
@@ -9,7 +9,7 @@ export class Menu extends Base {
     private tips: Node;
 
     protected start(): void {
-        this.tips.getComponentInChildren(RichText).string = t('menu.help')
+        this.tips.getComponentInChildren(RichText).string = t('menu.help');
     }
 
     gotoGame() {
@@ -20,9 +20,18 @@ export class Menu extends Base {
 
     showTips() {
         this.tips.active = true;
+        tween(this.tips).to(0.2, {
+            scale: new Vec3(1, 1, 1),
+            eulerAngles: new Vec3(0, 0, 0),
+        }).start();
     }
 
     hideTips() {
-        this.tips.active = false;
+        tween(this.tips).to(0.2, {
+            scale: new Vec3(0.5, 0.5, 0.5),
+            eulerAngles: new Vec3(0, 0, 180)
+        }).call(() => {
+            this.tips.active = false;
+        }).start();
     }
 }
