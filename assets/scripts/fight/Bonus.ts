@@ -36,7 +36,7 @@ export class Bonus extends Base {
 
             const bonusNode = instantiate(this.bonusPrefab);
             bonusNode.getComponent(Sprite).spriteFrame = this.game.getBonusTexture(type);
-            bonusNode.addComponent(Data<BONUS>).data = type;
+            bonusNode.getComponent(Data<BONUS>).data = type;
             bonusNode.setPosition(x, y);
             this.bindCollider(bonusNode.getComponent(Collider2D));
             this.scheduleOnce(this.appendChild.bind(this, bonusNode));
