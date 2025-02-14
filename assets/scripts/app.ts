@@ -1,43 +1,47 @@
-import { _decorator, Component, director, find, Node, sys } from 'cc';
-import { AudioMgr } from './mgrs/AudioMgr';
-import { GameMgr } from './mgrs/GameMgr';
-import { AnimationMgr } from './mgrs/AnimationMgr';
-import { setup } from './mgrs/toast';
-import { init } from '../../extensions/i18n/assets/LanguageData';
+import { _decorator, Component, director, find, Node, sys } from "cc";
+import { AudioMgr } from "./mgrs/AudioMgr";
+import { GameMgr } from "./mgrs/GameMgr";
+import { AnimationMgr } from "./mgrs/AnimationMgr";
+import { setup } from "./mgrs/toast";
+import { init } from "../../extensions/i18n/assets/LanguageData";
 const { ccclass, property } = _decorator;
 
-@ccclass('app')
+@ccclass("app")
 export class app extends Component {
-
-    @property({displayName: '初始游戏入口'})
-    private entryPoint = 'menu';
+    @property({ displayName: "初始游戏入口" })
+    private entryPoint = "menu";
 
     protected onLoad(): void {
-        if (!find('ref')) {
-            const node = new Node('ref');
+        if (!find("ref")) {
+            const node = new Node("ref");
             director.addPersistRootNode(node);
             node.addComponent(AudioMgr);
             node.addComponent(GameMgr);
             node.addComponent(AnimationMgr);
             setup(node);
 
-            console.log('APP Mount')
+            console.log("APP Mount");
 
             init(sys.language);
         }
     }
 
     protected onEnable(): void {
-        console.log('START NODE MOUNT')
-        const game = find('ref').getComponent(GameMgr);
+        console.log("START NODE MOUNT");
+        const game = find("ref").getComponent(GameMgr);
         if (game.ready) {
-            director.loadScene(this.entryPoint)
+            this.gotoMenu();
         } else {
-            game.node.once('ready', () => {
-                director.loadScene(this.entryPoint)
-            })
+            game.node.once("ready", () => {
+                this.gotoMenu();
+            });
         }
     }
+
+    gotoMenu() {
+        // tween(this.label).delay(1).to(1, {color: Color.TRANSPARENT}).start();
+        // this.scheduleOnce(() => {
+        director.loadScene(this.entryPoint);
+        // }, 2);
+    }
 }
-
-
