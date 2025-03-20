@@ -2,6 +2,10 @@
 
 游戏设计大小 300x208
 
+## 试玩
+
+[WEB DEMO](https://next.youtu.tv/tank/index.html)
+
 ## 玩法介绍
 
 复刻经典坦克大战游戏玩法， 双人游戏时, PC端同屏。移动端会分左右屏。
